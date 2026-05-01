@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>山也餐盒 · 營運儀表板</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      background: #1a1a2e;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .brand { color: #fff; font-size: 18px; font-weight: 700; letter-spacing: 1px; padding: 14px 0; }
+    .brand span { color: #e8b84b; }
+    .header-right { display: flex; align-items: center; gap: 12px; padding: 14px 0; }
+    .date-pill { color: rgba(255,255,255,0.5); font-size: 13px; }
+    .btn-input {
+      background: #e8b84b;
+      color: #1a1a2e;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-input:hover { opacity: 0.85; }
+
+    /* ── Store Tabs ── */
+    .store-tabs {
+      background: #fff;
+      border-bottom: 1px solid #e8eaed;
+      padding: 0 24px;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .store-tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      padding: 14px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #888;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { color: #1a1a2e; }
+    .tab-btn.active { color: #1a1a2e; border-bottom-color: #e8b84b; font-weight: 700; }
+
+    /* ── Pages ── */
+    .page { display: none; padding: 24px; }
+    .page.active { display: block; }
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #aaa; margin-bottom: 12px; }
+    .divider { border: none; border-top: 1px solid #e8eaed; margin: 8px 0 28px; }
+
+    /* ── KPI Cards ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 32px; }
+    .kpi-card { background: #fff; border-radius: 14px; padding: 20px 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 6px; position: relative; overflow: hidden; }
+    .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .kpi-card.yellow::before { background: #e8b84b; }
+    .kpi-card.blue::before   { background: #4a90d9; }
+    .kpi-card.green::before  { background: #3bb87b; }
+    .kpi-card.red::before    { background: #e05c5c; }
+    .kpi-card.purple::before { background: #8b5cf6; }
+    .kpi-icon { font-size: 20px; }
+    .kpi-label { font-size: 12px; color: #999; }
+    .kpi-val { font-size: 26px; font-weight: 800; line-height: 1.1; }
+    .kpi-sub { font-size: 12px; color: #bbb; }
+    .kpi-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 20px; width: fit-content; margin-top: 2px; }
+    .kpi-badge.good { background: #e6f9f0; color: #2a9d6f; }
+    .kpi-badge.warn { background: #fff4e0; color: #c98000; }
+    .kpi-badge.bad  { background: #fdecea; color: #c0392b; }
+
+    /* ── Charts ── */
+    .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .chart-card { background: #fff; border-radius: 14px; padding: 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .chart-card h3 { font-size: 12px; font-weight: 700; color: #aaa; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; margin-bottom: 32px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); font-size: 14px; }
+    thead tr { background: #1a1a2e; color: #fff; }
+    thead th { padding: 12px 16px; text-align: left; font-weight: 500; font-size: 12px; letter-spacing: 0.5px; }
+    tbody tr { border-bottom: 1px solid #f4f5f7; transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fafbfc; }
+    tbody td { padding: 12px 16px; }
+    .tbadge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .tbadge.good { background: #e6f9f0; color: #2a9d6f; }
+    .tbadge.warn { background: #fff4e0; color: #c98000; }
+    .tbadge.bad  { background: #fdecea; color: #c0392b; }
+
+    /* ── Overview Cards ── */
+    .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .store-mini-card { background: #fff; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; border-left: 4px solid #e8b84b; }
+    .store-mini-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .store-mini-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+    .mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mini-stat label { font-size: 11px; color: #aaa; display: block; }
+    .mini-stat .v { font-size: 16px; font-weight: 700; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 18px;
+      padding: 28px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+    .modal-header h2 { font-size: 18px; font-weight: 700; }
+    .modal-close { background: #f0f2f5; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #e8eaed;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: #e8b84b; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.15s;
+    }
+    .btn-submit:hover { opacity: 0.85; }
+    .success-msg { display: none; background: #e6f9f0; color: #2a9d6f; padding: 12px; border-radius: 10px; text-align: center; font-weight: 600; margin-top: 12px; }
+
+    @media (max-width: 640px) {
+      .page { padding: 14px; }
+      header { padding: 0 14px; }
+      .store-tabs { padding: 0 14px; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="brand">山也餐盒 <span>·</span> 營運儀表板</div>
+  <div class="header-right">
+    <div class="date-pill" id="today-date"></div>
+    <button class="btn-input" onclick="openModal()">＋ 填寫今日資料</button>
+  </div>
+</header>
+
+<!-- Store Tabs -->
+<div class="store-tabs" id="store-tabs"></div>
+<div id="pages"></div>
+
+<!-- Input Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>填寫每日資料</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>門市</label>
+      <select id="f-store">
+        <option value="s1">竹北總店</option>
+        <option value="s2">竹北二店</option>
+        <option value="s3">新竹東區店</option>
+        <option value="s4">新竹北區店</option>
+        <option value="s5">芎林店</option>
+        <option value="s6">關西店</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>日期</label>
+      <input type="date" id="f-date" />
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>今日營收 (NT$)</label>
+        <input type="number" id="f-rev" placeholder="0" min="0" />
+      </div>
+      <div class="form-group">
+        <label>外送金額 (NT$)</label>
+        <input type="number" id="f-delivery" placeholder="0" min="0" />
+      </div>
+      <div class="form-group">
+        <label>Uber Eats (NT$)</label>
+        <input type="number" id="f-uber" placeholder="0" min="0" />
+      </div>
+      <div class="form-group">
+        <label>食材成本 (NT$)</label>
+        <input type="number" id="f-cost" placeholder="0" min="0" />
+      </div>
+    </div>
+    <button class="btn-submit" onclick="submitData()">儲存資料</button>
+    <div class="success-msg" id="success-msg">✓ 資料已儲存！</div>
+  </div>
+</div>
+
+<script>
+// ── 門店設定 ──
+const STORES = [
+  { id: 's1', name: '竹北總店' },
+  { id: 's2', name: '竹北二店' },
+  { id: 's3', name: '新竹東區店' },
+  { id: 's4', name: '新竹北區店' },
+  { id: 's5', name: '芎林店' },
+  { id: 's6', name: '關西店' },
+];
+const weekLabels = ['週一','週二','週三','週四','週五','週六','今日'];
+let charts = {};
+
+// ── 日期工具 ──
+function todayStr() {
+  return new Date().toISOString().slice(0,10);
+}
+function fmtDate(d) {
+  return d.slice(5).replace('-','/');
+}
+
+// ── Google Sheets API ──
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzH_t64QL9BjY9BMqAMpm-8a9i93VqBfICP4Tx8mqlWXHBwVIrNLpCu2tiXT5QpLF3Ltw/exec';
+let _cache = null;
+
+async function fetchAllData() {
+  try {
+    const res = await fetch(WEBAPP_URL);
+    const json = await res.json();
+    _cache = json.data || {};
+    localStorage.setItem('sanye_cache', JSON.stringify(_cache));
+  } catch (e) {
+    // 離線時用本地快取
+    _cache = JSON.parse(localStorage.getItem('sanye_cache') || '{}');
+  }
+  return _cache;
+}
+
+function getData() {
+  return _cache || JSON.parse(localStorage.getItem('sanye_cache') || '{}');
+}
+
+function getStoreRecords(storeId) {
+  return getData()[storeId] || {};
+}
+
+async function setRecord(storeId, date, record) {
+  // 先更新本地快取，讓 UI 即時反應
+  if (!_cache) _cache = {};
+  if (!_cache[storeId]) _cache[storeId] = {};
+  _cache[storeId][date] = record;
+  localStorage.setItem('sanye_cache', JSON.stringify(_cache));
+
+  // 用 GET + 參數傳送（避免 CORS 問題）
+  const url = new URL(WEBAPP_URL);
+  url.searchParams.set('action', 'write');
+  url.searchParams.set('storeId', storeId);
+  url.searchParams.set('date', date);
+  url.searchParams.set('rev', record.rev);
+  url.searchParams.set('delivery', record.delivery);
+  url.searchParams.set('uber', record.uber);
+  url.searchParams.set('cost', record.cost);
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  try {
+    await fetch(url.toString(), { mode: 'no-cors', signal: controller.signal });
+  } catch (e) {
+    console.warn('傳送失敗（資料已存本地）:', e.message);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ── 取得最近 7 天資料 ──
+function getLast7(storeId) {
+  const records = getStoreRecords(storeId);
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0,10);
+    days.push({ date: fmtDate(key), key, ...(records[key] || { rev:0, delivery:0, uber:0, cost:0 }) });
+  }
+  return days;
+}
+function getTodayKpi(storeId) {
+  const records = getStoreRecords(storeId);
+  return records[todayStr()] || { rev:0, delivery:0, uber:0, cost:0 };
+}
+
+// ── 日期顯示 ──
+document.getElementById('today-date').textContent =
+  new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+
+// ── 設定今日日期為預設 ──
+document.getElementById('f-date').value = todayStr();
+
+// ── 建立 Tabs & Pages ──
+const tabsEl  = document.getElementById('store-tabs');
+const pagesEl = document.getElementById('pages');
+
+// 全覽 tab
+const allBtn = document.createElement('button');
+allBtn.className = 'tab-btn active';
+allBtn.textContent = '全部門店';
+allBtn.dataset.id = 'all';
+allBtn.onclick = () => switchTab('all');
+tabsEl.appendChild(allBtn);
+
+const allPage = document.createElement('div');
+allPage.className = 'page active';
+allPage.id = 'page-all';
+pagesEl.appendChild(allPage);
+
+// 各店 tabs
+STORES.forEach(store => {
+  const btn = document.createElement('button');
+  btn.className = 'tab-btn';
+  btn.textContent = store.name;
+  btn.dataset.id = store.id;
+  btn.onclick = () => switchTab(store.id);
+  tabsEl.appendChild(btn);
+
+  const page = document.createElement('div');
+  page.className = 'page';
+  page.id = 'page-' + store.id;
+  pagesEl.appendChild(page);
+});
+
+// ── 切換 Tab ──
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-id="'+id+'"]').classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+}
+
+// ── 渲染全覽頁 ──
+function renderAllPage() {
+  const el = document.getElementById('page-all');
+  const allKpis = STORES.map(s => ({ ...s, kpi: getTodayKpi(s.id) }));
+  const totalRev  = allKpis.reduce((s,x)=>s+x.kpi.rev,0);
+  const totalDeli = allKpis.reduce((s,x)=>s+x.kpi.delivery,0);
+  const totalUber = allKpis.reduce((s,x)=>s+x.kpi.uber,0);
+  const totalCost = allKpis.reduce((s,x)=>s+x.kpi.cost,0);
+  const costRate  = totalRev ? ((totalCost/totalRev)*100).toFixed(1) : '0.0';
+  const rateClass = costRate < 33 ? 'good' : costRate < 37 ? 'warn' : 'bad';
+
+  const miniCards = allKpis.map(s => {
+    const rate = s.kpi.rev ? ((s.kpi.cost/s.kpi.rev)*100).toFixed(1) : '0.0';
+    const cls  = rate < 33 ? 'good' : rate < 37 ? 'warn' : 'bad';
+    return `<div class="store-mini-card" onclick="switchTab('${s.id}')">
+      <h4>${s.name} <span style="font-size:11px;color:#bbb;font-weight:400">▶ 詳情</span></h4>
+      <div class="mini-stats">
+        <div class="mini-stat"><label>營收</label><div class="v">$${s.kpi.rev.toLocaleString()}</div></div>
+        <div class="mini-stat"><label>Uber Eats</label><div class="v">$${s.kpi.uber.toLocaleString()}</div></div>
+        <div class="mini-stat"><label>外送</label><div class="v">$${s.kpi.delivery.toLocaleString()}</div></div>
+        <div class="mini-stat"><label>成本率</label><div class="v"><span class="tbadge ${cls}">${rate}%</span></div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="section-label">今日彙總</div>
+    <div class="kpi-grid">
+      <div class="kpi-card yellow"><div class="kpi-icon">💰</div><div class="kpi-label">今日總營收</div><div class="kpi-val">$${totalRev.toLocaleString()}</div><div class="kpi-sub">六間店合計</div></div>
+      <div class="kpi-card blue"><div class="kpi-icon">🛵</div><div class="kpi-label">外送總額</div><div class="kpi-val">$${totalDeli.toLocaleString()}</div><div class="kpi-sub">自營 + 平台</div></div>
+      <div class="kpi-card green"><div class="kpi-icon">📦</div><div class="kpi-label">Uber Eats</div><div class="kpi-val">$${totalUber.toLocaleString()}</div><div class="kpi-sub">六間店合計</div></div>
+      <div class="kpi-card red"><div class="kpi-icon">🧾</div><div class="kpi-label">食材成本率</div><div class="kpi-val">${costRate}%</div><div class="kpi-badge ${rateClass}">${costRate < 33 ? '✓ 良好' : costRate < 37 ? '⚠ 注意' : '✕ 超標'}</div></div>
+    </div>
+    <hr class="divider" />
+    <div class="section-label">各門店今日狀況</div>
+    <div class="overview-grid">${miniCards}</div>`;
+}
+
+// ── 渲染單店頁 ──
+function renderStorePage(store) {
+  const el = document.getElementById('page-' + store.id);
+  const kpi  = getTodayKpi(store.id);
+  const last7 = getLast7(store.id);
+  const costRate = kpi.rev ? ((kpi.cost/kpi.rev)*100).toFixed(1) : '0.0';
+  const rateClass = costRate < 33 ? 'good' : costRate < 37 ? 'warn' : 'bad';
+  const delivPct = kpi.rev ? ((kpi.delivery/kpi.rev)*100).toFixed(0) : 0;
+  const uberPct  = kpi.rev ? ((kpi.uber/kpi.rev)*100).toFixed(0) : 0;
+
+  const rows = [...last7].reverse().map(d => {
+    const rate = d.rev ? ((d.cost/d.rev)*100).toFixed(1) : '0.0';
+    const cls  = rate < 33 ? 'good' : rate < 37 ? 'warn' : 'bad';
+    const isToday = d.key === todayStr();
+    return `<tr${isToday ? ' style="background:#fffdf0"' : ''}>
+      <td>${d.date}${isToday ? ' <span style="font-size:11px;color:#e8b84b;font-weight:700">今日</span>' : ''}</td>
+      <td>$${d.rev.toLocaleString()}</td>
+      <td>$${d.delivery.toLocaleString()}</td>
+      <td>$${d.uber.toLocaleString()}</td>
+      <td>$${d.cost.toLocaleString()}</td>
+      <td>${rate}%</td>
+      <td><span class="tbadge ${cls}">${rate < 33 ? '良好' : rate < 37 ? '注意' : '超標'}</span></td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="section-label">今日數值</div>
+    <div class="kpi-grid">
+      <div class="kpi-card yellow"><div class="kpi-icon">💰</div><div class="kpi-label">今日營收</div><div class="kpi-val">$${kpi.rev.toLocaleString()}</div><div class="kpi-sub">單店當日</div></div>
+      <div class="kpi-card blue"><div class="kpi-icon">🛵</div><div class="kpi-label">外送金額</div><div class="kpi-val">$${kpi.delivery.toLocaleString()}</div><div class="kpi-sub">佔營收 ${delivPct}%</div></div>
+      <div class="kpi-card green"><div class="kpi-icon">📦</div><div class="kpi-label">Uber Eats</div><div class="kpi-val">$${kpi.uber.toLocaleString()}</div><div class="kpi-sub">佔營收 ${uberPct}%</div></div>
+      <div class="kpi-card red"><div class="kpi-icon">🧾</div><div class="kpi-label">食材成本率</div><div class="kpi-val">${costRate}%</div><div class="kpi-badge ${rateClass}">${costRate < 33 ? '✓ 良好' : costRate < 37 ? '⚠ 注意' : '✕ 超標'}</div></div>
+      <div class="kpi-card purple"><div class="kpi-icon">📊</div><div class="kpi-label">食材成本額</div><div class="kpi-val">$${kpi.cost.toLocaleString()}</div><div class="kpi-sub">目標 &lt; $${kpi.rev ? Math.round(kpi.rev*0.35).toLocaleString() : '—'}</div></div>
+    </div>
+    <hr class="divider" />
+    <div class="section-label">本週趨勢</div>
+    <div class="chart-grid">
+      <div class="chart-card"><h3>每日營收</h3><canvas id="chart-rev-${store.id}"></canvas></div>
+      <div class="chart-card"><h3>外送 vs Uber Eats</h3><canvas id="chart-ch-${store.id}"></canvas></div>
+    </div>
+    <hr class="divider" />
+    <div class="section-label">每日明細（近 7 日）</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>日期</th><th>營收</th><th>外送</th><th>Uber Eats</th><th>食材成本</th><th>成本率</th><th>狀態</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+
+  // 銷毀舊圖表
+  if (charts['rev-'+store.id]) { charts['rev-'+store.id].destroy(); }
+  if (charts['ch-'+store.id])  { charts['ch-'+store.id].destroy(); }
+
+  const revData  = last7.map(d => d.rev);
+  const deliData = last7.map(d => d.delivery);
+  const uberData = last7.map(d => d.uber);
+  const todayIdx = last7.findIndex(d => d.key === todayStr());
+
+  charts['rev-'+store.id] = new Chart(document.getElementById('chart-rev-'+store.id), {
+    type: 'bar',
+    data: {
+      labels: weekLabels,
+      datasets: [{ label: '營收', data: revData,
+        backgroundColor: revData.map((_,i) => i===todayIdx ? '#e8b84b' : '#1a1a2e'),
+        borderRadius: 6 }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: v=>'$'+v.toLocaleString() } } } }
+  });
+
+  charts['ch-'+store.id] = new Chart(document.getElementById('chart-ch-'+store.id), {
+    type: 'line',
+    data: {
+      labels: weekLabels,
+      datasets: [
+        { label: '外送', data: deliData, borderColor: '#4a90d9', backgroundColor: 'rgba(74,144,217,0.08)', fill: true, tension: 0.4, pointRadius: 4 },
+        { label: 'Uber Eats', data: uberData, borderColor: '#e8b84b', backgroundColor: 'rgba(232,184,75,0.08)', fill: true, tension: 0.4, pointRadius: 4 }
+      ]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } },
+      scales: { y: { ticks: { callback: v=>'$'+v.toLocaleString() } } } }
+  });
+}
+
+// ── Modal ──
+function openModal() {
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('success-msg').style.display = 'none';
+  // 預設選目前頁的門店
+  const active = document.querySelector('.tab-btn.active');
+  const id = active?.dataset.id;
+  if (id && id !== 'all') document.getElementById('f-store').value = id;
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+function closeModalOnBg(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+async function submitData() {
+  const storeId  = document.getElementById('f-store').value;
+  const date     = document.getElementById('f-date').value;
+  const rev      = parseInt(document.getElementById('f-rev').value) || 0;
+  const delivery = parseInt(document.getElementById('f-delivery').value) || 0;
+  const uber     = parseInt(document.getElementById('f-uber').value) || 0;
+  const cost     = parseInt(document.getElementById('f-cost').value) || 0;
+
+  if (!date) { alert('請選擇日期'); return; }
+
+  const btn = document.querySelector('.btn-submit');
+  btn.textContent = '儲存中...';
+  btn.disabled = true;
+
+  await setRecord(storeId, date, { rev, delivery, uber, cost });
+
+  btn.textContent = '儲存資料';
+  btn.disabled = false;
+
+  ['f-rev','f-delivery','f-uber','f-cost'].forEach(id => document.getElementById(id).value = '');
+
+  const msg = document.getElementById('success-msg');
+  msg.style.display = 'block';
+  setTimeout(() => { msg.style.display = 'none'; }, 2500);
+
+  renderAll();
+}
+
+// ── 初始渲染 ──
+function renderAll() {
+  renderAllPage();
+  STORES.forEach(renderStorePage);
+}
+
+// ── 啟動：先從 Google Sheets 拉資料再渲染 ──
+(async () => {
+  await fetchAllData();
+  renderAll();
+})();
+</script>
+</body>
+</html>
