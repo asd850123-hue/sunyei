@@ -134,6 +134,23 @@
     .list-badge.warn { background: #fff4e0; color: #c98000; }
     .list-badge.bad  { background: #fdecea; color: #c0392b; }
     .list-trend { font-size: 12px; font-weight: 700; }
+    .list-sub-row {
+      display: flex; align-items: center;
+      padding: 8px 20px 8px 68px;
+      border-bottom: 1px solid #f7f8fa;
+      background: #fafbfc;
+    }
+    .list-sub-row:last-child { border-bottom: none; }
+    .list-sub-label { flex: 1; font-size: 13px; color: #999; }
+    .list-sub-val { font-size: 13px; font-weight: 600; color: #555; }
+    .list-sub-pct { font-size: 12px; color: #bbb; margin-left: 8px; }
+    .list-section-divider {
+      padding: 8px 20px;
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #bbb;
+      background: #f7f8fa;
+      border-bottom: 1px solid #f0f2f5;
+    }
 
     /* ── Trend Chart ── */
     .chart-card {
@@ -248,7 +265,8 @@
     <div class="date-pill" id="today-date"></div>
     <span id="sync-time" style="font-size:11px;color:#999;white-space:nowrap;"></span>
     <button class="btn-input" style="background:#444;" onclick="manualRefresh()">↻ 重新整理</button>
-    <button class="btn-input" onclick="openModal()">＋ 填寫今日資料</button>
+    <button class="btn-input" style="background:#555;" onclick="openMonthModal()">📋 月資料</button>
+    <button class="btn-input" onclick="openModal()">＋ 今日營收</button>
   </div>
 </header>
 
@@ -275,26 +293,92 @@
       <label>日期</label>
       <input type="date" id="f-date" />
     </div>
+    <div class="form-group">
+      <label>自取收入 (NT$)</label>
+      <input type="number" id="f-takeout" placeholder="0" min="0" oninput="calcTotal()" />
+    </div>
     <div class="form-grid">
       <div class="form-group">
-        <label>今日營收 (NT$)</label>
-        <input type="number" id="f-rev" placeholder="0" min="0" />
-      </div>
-      <div class="form-group">
-        <label>外送金額 (NT$)</label>
-        <input type="number" id="f-delivery" placeholder="0" min="0" />
+        <label>外送 (NT$)</label>
+        <input type="number" id="f-delivery" placeholder="0" min="0" oninput="calcTotal()" />
       </div>
       <div class="form-group">
         <label>Uber Eats (NT$)</label>
-        <input type="number" id="f-uber" placeholder="0" min="0" />
+        <input type="number" id="f-uber" placeholder="0" min="0" oninput="calcTotal()" />
       </div>
-      <div class="form-group">
-        <label>食材成本 (NT$)</label>
-        <input type="number" id="f-cost" placeholder="0" min="0" />
-      </div>
+    </div>
+    <div style="background:#f7f8fa;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:13px;font-weight:600;color:#555;">今日總營收</span>
+      <span id="f-total-display" style="font-size:20px;font-weight:800;color:#1a1a2e;">$0</span>
     </div>
     <button class="btn-submit" onclick="submitData()">儲存資料</button>
     <div class="success-msg" id="success-msg">✓ 資料已儲存！</div>
+  </div>
+</div>
+
+<!-- 月資料 Modal -->
+<div class="modal-overlay" id="month-modal-overlay" onclick="closeMonthModalOnBg(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>填寫月資料</h2>
+      <button class="modal-close" onclick="closeMonthModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>門市</label>
+      <select id="m-store">
+        <option value="s1">六家店</option>
+        <option value="s2">竹科店</option>
+        <option value="s3">華興店</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>月份</label>
+      <input type="month" id="m-month" />
+    </div>
+    <div class="form-group">
+      <label>預估月營收目標 (NT$)</label>
+      <input type="number" id="m-target" placeholder="0" min="0" />
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>熟客佔比 (%)</label>
+        <input type="number" id="m-regular" placeholder="0" min="0" max="100" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label>客單價 (NT$)</label>
+        <input type="number" id="m-ticket" placeholder="0" min="0" />
+      </div>
+      <div class="form-group">
+        <label>Google 評分</label>
+        <input type="number" id="m-google" placeholder="4.5" min="1" max="5" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label>客訴率 (%)</label>
+        <input type="number" id="m-complaint" placeholder="0" min="0" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label>物料成本 (NT$)</label>
+        <input type="number" id="m-material" placeholder="0" min="0" />
+      </div>
+      <div class="form-group">
+        <label>人事成本 (NT$)</label>
+        <input type="number" id="m-labor" placeholder="0" min="0" />
+      </div>
+      <div class="form-group">
+        <label>外場 QSC (分)</label>
+        <input type="number" id="m-foh" placeholder="0" min="0" max="100" />
+      </div>
+      <div class="form-group">
+        <label>內場 QSC (分)</label>
+        <input type="number" id="m-boh" placeholder="0" min="0" max="100" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>門店健康度 (分)</label>
+      <input type="number" id="m-health" placeholder="0" min="0" max="100" />
+    </div>
+    <button class="btn-submit" onclick="submitMonthData()">儲存月資料</button>
+    <div class="success-msg" id="month-success-msg">✓ 月資料已儲存！</div>
   </div>
 </div>
 
@@ -561,26 +645,42 @@ function renderStorePage(store) {
   const last30 = getLast30(store.id);
   const last7  = last30.slice(-7);
 
-  const costRate  = kpi.rev ? ((kpi.cost / kpi.rev) * 100).toFixed(1) : '0.0';
-  const rateClass = costRate < 33 ? 'good' : costRate < 37 ? 'warn' : 'bad';
-  const delivPct  = kpi.rev ? ((kpi.delivery / kpi.rev) * 100).toFixed(0) : 0;
-  const uberPct   = kpi.rev ? ((kpi.uber / kpi.rev) * 100).toFixed(0) : 0;
+  const total     = kpi.rev + kpi.delivery + kpi.uber;
+  const prevTotal = prev.rev + prev.delivery + prev.uber;
+  const takeoutPct = total ? Math.round(kpi.rev / total * 100) : 0;
+  const delivPct   = total ? Math.round(kpi.delivery / total * 100) : 0;
+  const uberPct    = total ? Math.round(kpi.uber / total * 100) : 0;
   const kpiDateLabel = isToday
     ? new Date().toLocaleDateString('zh-TW', { month:'numeric', day:'numeric', weekday:'short' })
     : new Date(kpiDate + 'T00:00:00').toLocaleDateString('zh-TW', { month:'numeric', day:'numeric', weekday:'short' }) + ' (最近紀錄)';
 
+  // 月累計 & 達成率
+  const ym = todayStr().slice(0,7);
+  const monthly = getMonthlyRecord(store.id, ym);
+  const monthRecords = getStoreRecords(store.id);
+  const monthTotal = Object.entries(monthRecords)
+    .filter(([d]) => d.startsWith(ym))
+    .reduce((sum, [, r]) => sum + r.rev + r.delivery + r.uber, 0);
+  const target = monthly.target || 0;
+  const achieve = target ? ((monthTotal / target) * 100).toFixed(1) : null;
+  const achieveClass = achieve === null ? '' : achieve >= 100 ? 'good' : achieve >= 80 ? 'warn' : 'bad';
+
+  const dash = v => v !== undefined && v !== null && v !== 0 ? v : null;
+  const fmt$ = v => v !== null ? '$' + Number(v).toLocaleString() : '—';
+  const fmtPct = v => v !== null ? v + '%' : '—';
+  const fmtScore = v => v !== null ? v + ' 分' : '—';
+  const fmtRating = v => v !== null ? '★ ' + v : '—';
+
   // 近 7 天表格
   const rows = [...last7].reverse().map(d => {
-    const rate = d.rev ? ((d.cost / d.rev) * 100).toFixed(1) : '0.0';
-    const cls  = rate < 33 ? 'good' : rate < 37 ? 'warn' : 'bad';
-    const isToday = d.key === todayStr();
-    return `<tr${isToday ? ' style="background:#fffdf0"' : ''}>
-      <td>${d.date}${isToday ? ' <span style="font-size:11px;color:#e8b84b;font-weight:700">今日</span>' : ''}</td>
+    const dtotal = d.rev + d.delivery + d.uber;
+    const isT = d.key === todayStr();
+    return `<tr${isT ? ' style="background:#fffdf0"' : ''}>
+      <td>${d.date}${isT ? ' <span style="font-size:11px;color:#e8b84b;font-weight:700">今日</span>' : ''}</td>
+      <td>$${dtotal.toLocaleString()}</td>
       <td>$${d.rev.toLocaleString()}</td>
       <td>$${d.delivery.toLocaleString()}</td>
       <td>$${d.uber.toLocaleString()}</td>
-      <td>$${d.cost.toLocaleString()}</td>
-      <td><span class="tbadge ${cls}">${rate}%</span></td>
     </tr>`;
   }).join('');
 
@@ -590,45 +690,86 @@ function renderStorePage(store) {
         <h3>${store.name} · ${isToday ? '今日數值' : '最近紀錄'}</h3>
         <span>${kpiDateLabel}</span>
       </div>
+
       <div class="list-row">
         <div class="list-icon yellow">💰</div>
-        <div class="list-label">今日營收</div>
+        <div class="list-label">總營收</div>
         <div class="list-right">
-          <div class="list-val">$${kpi.rev.toLocaleString()}</div>
-          ${trendBadge(kpi.rev, prev.rev)}
+          <div class="list-val">$${total.toLocaleString()}</div>
+          ${trendBadge(total, prevTotal)}
         </div>
       </div>
+      <div class="list-sub-row">
+        <div class="list-sub-label">自取</div>
+        <div class="list-sub-val">$${kpi.rev.toLocaleString()}</div>
+        <div class="list-sub-pct">${takeoutPct}%</div>
+      </div>
+      <div class="list-sub-row">
+        <div class="list-sub-label">外送</div>
+        <div class="list-sub-val">$${kpi.delivery.toLocaleString()}</div>
+        <div class="list-sub-pct">${delivPct}%</div>
+      </div>
+      <div class="list-sub-row">
+        <div class="list-sub-label">Uber Eats</div>
+        <div class="list-sub-val">$${kpi.uber.toLocaleString()}</div>
+        <div class="list-sub-pct">${uberPct}%</div>
+      </div>
+
       <div class="list-row">
-        <div class="list-icon blue">🛵</div>
-        <div class="list-label">外送金額</div>
+        <div class="list-icon blue">📈</div>
+        <div class="list-label">月累計 / 達成率</div>
         <div class="list-right">
-          <div class="list-val">$${kpi.delivery.toLocaleString()}</div>
-          <span style="font-size:12px;color:#bbb">佔 ${delivPct}%</span>
+          <div class="list-val">$${monthTotal.toLocaleString()}</div>
+          ${achieve !== null ? `<span class="list-badge ${achieveClass}">${achieve}%</span>` : '<span style="font-size:12px;color:#bbb">未設目標</span>'}
         </div>
       </div>
+
+      <div class="list-section-divider">月資料</div>
+
       <div class="list-row">
-        <div class="list-icon green">📦</div>
-        <div class="list-label">Uber Eats</div>
-        <div class="list-right">
-          <div class="list-val">$${kpi.uber.toLocaleString()}</div>
-          <span style="font-size:12px;color:#bbb">佔 ${uberPct}%</span>
-        </div>
+        <div class="list-icon green">👥</div>
+        <div class="list-label">熟客佔比</div>
+        <div class="list-right"><div class="list-val">${fmtPct(dash(monthly.regular))}</div></div>
       </div>
       <div class="list-row">
-        <div class="list-icon red">🧾</div>
-        <div class="list-label">食材成本率</div>
-        <div class="list-right">
-          <div class="list-val">${costRate}%</div>
-          <span class="list-badge ${rateClass}">${costRate < 33 ? '✓ 良好' : costRate < 37 ? '⚠ 注意' : '✕ 超標'}</span>
-        </div>
+        <div class="list-icon yellow">🧾</div>
+        <div class="list-label">客單價</div>
+        <div class="list-right"><div class="list-val">${fmt$(dash(monthly.ticket))}</div></div>
       </div>
       <div class="list-row">
-        <div class="list-icon purple">💵</div>
-        <div class="list-label">食材成本額</div>
-        <div class="list-right">
-          <div class="list-val">$${kpi.cost.toLocaleString()}</div>
-          <span style="font-size:12px;color:#bbb">目標 &lt;$${kpi.rev ? Math.round(kpi.rev*0.35).toLocaleString() : '—'}</span>
-        </div>
+        <div class="list-icon green">⭐</div>
+        <div class="list-label">Google 評分</div>
+        <div class="list-right"><div class="list-val">${fmtRating(dash(monthly.google))}</div></div>
+      </div>
+      <div class="list-row">
+        <div class="list-icon purple">📦</div>
+        <div class="list-label">物料成本</div>
+        <div class="list-right"><div class="list-val">${fmt$(dash(monthly.material))}</div></div>
+      </div>
+      <div class="list-row">
+        <div class="list-icon blue">👤</div>
+        <div class="list-label">人事成本</div>
+        <div class="list-right"><div class="list-val">${fmt$(dash(monthly.labor))}</div></div>
+      </div>
+      <div class="list-row">
+        <div class="list-icon yellow">🏪</div>
+        <div class="list-label">外場 QSC</div>
+        <div class="list-right"><div class="list-val">${fmtScore(dash(monthly.foh))}</div></div>
+      </div>
+      <div class="list-row">
+        <div class="list-icon red">🍳</div>
+        <div class="list-label">內場 QSC</div>
+        <div class="list-right"><div class="list-val">${fmtScore(dash(monthly.boh))}</div></div>
+      </div>
+      <div class="list-row">
+        <div class="list-icon red">📣</div>
+        <div class="list-label">客訴率</div>
+        <div class="list-right"><div class="list-val">${fmtPct(dash(monthly.complaint))}</div></div>
+      </div>
+      <div class="list-row">
+        <div class="list-icon green">❤️</div>
+        <div class="list-label">門店健康度</div>
+        <div class="list-right"><div class="list-val">${fmtScore(dash(monthly.health))}</div></div>
       </div>
     </div>
 
@@ -636,10 +777,9 @@ function renderStorePage(store) {
       <div class="chart-header">
         <h3>30 天趨勢</h3>
         <div class="chart-legend">
-          <div class="legend-item"><div class="legend-dot" style="background:#e8b84b"></div>營收</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#e8b84b"></div>總營收</div>
           <div class="legend-item"><div class="legend-dot" style="background:#4a90d9"></div>外送</div>
           <div class="legend-item"><div class="legend-dot" style="background:#3bb87b"></div>Uber Eats</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#e05c5c"></div>食材成本</div>
         </div>
       </div>
       <canvas id="chart-trend-${store.id}" height="120"></canvas>
@@ -649,7 +789,7 @@ function renderStorePage(store) {
     <div class="section-label">近 7 日明細</div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>日期</th><th>營收</th><th>外送</th><th>Uber Eats</th><th>食材成本</th><th>成本率</th></tr></thead>
+        <thead><tr><th>日期</th><th>總營收</th><th>自取</th><th>外送</th><th>Uber Eats</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
@@ -670,7 +810,7 @@ function renderStorePage(store) {
       labels,
       datasets: [
         {
-          label: '營收', data: last30.map(d => d.rev),
+          label: '總營收', data: last30.map(d => d.rev + d.delivery + d.uber),
           borderColor: '#e8b84b', backgroundColor: 'rgba(232,184,75,0.07)',
           borderWidth: 2, fill: false, tension: 0.35,
           pointRadius: last30.map((_, i) => i === todayIdx ? 7 : 4),
@@ -692,14 +832,6 @@ function renderStorePage(store) {
           pointRadius: last30.map((_, i) => i === todayIdx ? 7 : 4),
           pointBackgroundColor: last30.map((_, i) => i === todayIdx ? '#3bb87b' : '#fff'),
           pointBorderColor: '#3bb87b', pointBorderWidth: 2,
-        },
-        {
-          label: '食材成本', data: last30.map(d => d.cost),
-          borderColor: '#e05c5c', backgroundColor: 'transparent',
-          borderWidth: 2, fill: false, tension: 0.35,
-          pointRadius: last30.map((_, i) => i === todayIdx ? 7 : 4),
-          pointBackgroundColor: last30.map((_, i) => i === todayIdx ? '#e05c5c' : '#fff'),
-          pointBorderColor: '#e05c5c', pointBorderWidth: 2,
         },
       ]
     },
@@ -736,11 +868,31 @@ function renderStorePage(store) {
   });
 }
 
-// ── Modal ──
+// ── 月資料 ──
+function getMonthStr() { return todayStr().slice(0,7); }
+
+function getMonthlyRecord(storeId, ym) {
+  const all = JSON.parse(localStorage.getItem('sanye_monthly') || '{}');
+  return (all[storeId] && all[storeId][ym]) || {};
+}
+function setMonthlyRecord(storeId, ym, data) {
+  const all = JSON.parse(localStorage.getItem('sanye_monthly') || '{}');
+  if (!all[storeId]) all[storeId] = {};
+  all[storeId][ym] = { ...getMonthlyRecord(storeId, ym), ...data };
+  localStorage.setItem('sanye_monthly', JSON.stringify(all));
+}
+
+// ── 每日 Modal ──
+function calcTotal() {
+  const t = parseInt(document.getElementById('f-takeout').value) || 0;
+  const d = parseInt(document.getElementById('f-delivery').value) || 0;
+  const u = parseInt(document.getElementById('f-uber').value) || 0;
+  document.getElementById('f-total-display').textContent = '$' + (t + d + u).toLocaleString();
+}
+
 function openModal() {
   document.getElementById('modal-overlay').classList.add('open');
   document.getElementById('success-msg').style.display = 'none';
-  // 預設選目前頁的門店
   const active = document.querySelector('.tab-btn.active');
   const id = active?.dataset.id;
   if (id && id !== 'all') document.getElementById('f-store').value = id;
@@ -755,29 +907,71 @@ function closeModalOnBg(e) {
 async function submitData() {
   const storeId  = document.getElementById('f-store').value;
   const date     = document.getElementById('f-date').value;
-  const rev      = parseInt(document.getElementById('f-rev').value) || 0;
+  const rev      = parseInt(document.getElementById('f-takeout').value) || 0;
   const delivery = parseInt(document.getElementById('f-delivery').value) || 0;
   const uber     = parseInt(document.getElementById('f-uber').value) || 0;
-  const cost     = parseInt(document.getElementById('f-cost').value) || 0;
 
   if (!date) { alert('請選擇日期'); return; }
 
-  const btn = document.querySelector('.btn-submit');
+  const btn = document.querySelector('#modal-overlay .btn-submit');
   btn.textContent = '儲存中...';
   btn.disabled = true;
 
-  await setRecord(storeId, date, { rev, delivery, uber, cost });
+  await setRecord(storeId, date, { rev, delivery, uber, cost: 0 });
 
   btn.textContent = '儲存資料';
   btn.disabled = false;
 
-  ['f-rev','f-delivery','f-uber','f-cost'].forEach(id => document.getElementById(id).value = '');
+  ['f-takeout','f-delivery','f-uber'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-total-display').textContent = '$0';
 
   const msg = document.getElementById('success-msg');
   msg.style.display = 'block';
   setTimeout(() => { msg.style.display = 'none'; }, 2500);
 
   renderAll();
+}
+
+// ── 月資料 Modal ──
+function openMonthModal() {
+  document.getElementById('month-modal-overlay').classList.add('open');
+  document.getElementById('month-success-msg').style.display = 'none';
+  document.getElementById('m-month').value = getMonthStr();
+  const active = document.querySelector('.tab-btn.active');
+  const id = active?.dataset.id;
+  if (id && id !== 'all') {
+    document.getElementById('m-store').value = id;
+    loadMonthFormData(id, getMonthStr());
+  }
+}
+function closeMonthModal() {
+  document.getElementById('month-modal-overlay').classList.remove('open');
+}
+function closeMonthModalOnBg(e) {
+  if (e.target === document.getElementById('month-modal-overlay')) closeMonthModal();
+}
+function loadMonthFormData(storeId, ym) {
+  const d = getMonthlyRecord(storeId, ym);
+  const set = (id, val) => { if (val) document.getElementById(id).value = val; else document.getElementById(id).value = ''; };
+  set('m-target', d.target); set('m-regular', d.regular); set('m-ticket', d.ticket);
+  set('m-google', d.google); set('m-complaint', d.complaint); set('m-material', d.material);
+  set('m-labor', d.labor); set('m-foh', d.foh); set('m-boh', d.boh); set('m-health', d.health);
+}
+function submitMonthData() {
+  const storeId = document.getElementById('m-store').value;
+  const ym      = document.getElementById('m-month').value;
+  const num = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? undefined : v; };
+  const data = {
+    target: num('m-target'), regular: num('m-regular'), ticket: num('m-ticket'),
+    google: num('m-google'), complaint: num('m-complaint'), material: num('m-material'),
+    labor: num('m-labor'), foh: num('m-foh'), boh: num('m-boh'), health: num('m-health'),
+  };
+  Object.keys(data).forEach(k => data[k] === undefined && delete data[k]);
+  setMonthlyRecord(storeId, ym, data);
+
+  const msg = document.getElementById('month-success-msg');
+  msg.style.display = 'block';
+  setTimeout(() => { msg.style.display = 'none'; closeMonthModal(); renderAll(); }, 1500);
 }
 
 // ── 初始渲染 ──
