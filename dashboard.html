@@ -73,27 +73,46 @@
     .divider { border: none; border-top: 1px solid #e8eaed; margin: 8px 0 28px; }
 
     /* ── KPI Cards ── */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 32px; }
-    .kpi-card { background: #fff; border-radius: 14px; padding: 20px 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 6px; position: relative; overflow: hidden; }
-    .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
-    .kpi-card.yellow::before { background: #e8b84b; }
-    .kpi-card.blue::before   { background: #4a90d9; }
-    .kpi-card.green::before  { background: #3bb87b; }
-    .kpi-card.red::before    { background: #e05c5c; }
-    .kpi-card.purple::before { background: #8b5cf6; }
-    .kpi-icon { font-size: 20px; }
-    .kpi-label { font-size: 12px; color: #999; }
-    .kpi-val { font-size: 26px; font-weight: 800; line-height: 1.1; }
-    .kpi-sub { font-size: 12px; color: #bbb; }
-    .kpi-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 20px; width: fit-content; margin-top: 2px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .kpi-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px 20px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      display: flex; flex-direction: column; gap: 4px;
+      border-left: 4px solid #e8eaed;
+    }
+    .kpi-card.yellow { border-left-color: #e8b84b; }
+    .kpi-card.blue   { border-left-color: #4a90d9; }
+    .kpi-card.green  { border-left-color: #3bb87b; }
+    .kpi-card.red    { border-left-color: #e05c5c; }
+    .kpi-card.purple { border-left-color: #8b5cf6; }
+    .kpi-label { font-size: 11px; font-weight: 600; color: #aaa; letter-spacing: 0.5px; text-transform: uppercase; }
+    .kpi-val { font-size: 28px; font-weight: 800; line-height: 1.15; color: #1a1a2e; }
+    .kpi-sub { font-size: 12px; color: #bbb; margin-top: 2px; }
+    .kpi-badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; width: fit-content; margin-top: 4px; }
     .kpi-badge.good { background: #e6f9f0; color: #2a9d6f; }
     .kpi-badge.warn { background: #fff4e0; color: #c98000; }
     .kpi-badge.bad  { background: #fdecea; color: #c0392b; }
 
-    /* ── Charts ── */
+    /* ── Trend Chart ── */
+    .chart-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      margin-bottom: 24px;
+    }
+    .chart-card h3 {
+      font-size: 11px; font-weight: 700; color: #aaa;
+      margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px;
+    }
+    .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .chart-legend { display: flex; gap: 16px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    /* ── Chart grid ── */
     .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .chart-card { background: #fff; border-radius: 14px; padding: 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-    .chart-card h3 { font-size: 12px; font-weight: 700; color: #aaa; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
 
     /* ── Table ── */
     .table-wrap { overflow-x: auto; margin-bottom: 32px; }
@@ -207,12 +226,8 @@
     <div class="form-group">
       <label>門市</label>
       <select id="f-store">
-        <option value="s1">竹北總店</option>
-        <option value="s2">竹北二店</option>
-        <option value="s3">新竹東區店</option>
-        <option value="s4">新竹北區店</option>
-        <option value="s5">芎林店</option>
-        <option value="s6">關西店</option>
+        <option value="s1">竹科店</option>
+        <option value="s2">華興店</option>
       </select>
     </div>
     <div class="form-group">
@@ -245,12 +260,8 @@
 <script>
 // ── 門店設定 ──
 const STORES = [
-  { id: 's1', name: '竹北總店' },
-  { id: 's2', name: '竹北二店' },
-  { id: 's3', name: '新竹東區店' },
-  { id: 's4', name: '新竹北區店' },
-  { id: 's5', name: '芎林店' },
-  { id: 's6', name: '關西店' },
+  { id: 's1', name: '竹科店' },
+  { id: 's2', name: '華興店' },
 ];
 const weekLabels = ['週一','週二','週三','週四','週五','週六','今日'];
 let charts = {};
@@ -364,20 +375,28 @@ async function setRecord(storeId, date, record) {
   }
 }
 
-// ── 取得最近 7 天資料 ──
-function getLast7(storeId) {
+// ── 取得最近 N 天資料 ──
+function getLastN(storeId, n) {
   const records = getStoreRecords(storeId);
   const days = [];
-  for (let i = 6; i >= 0; i--) {
+  for (let i = n - 1; i >= 0; i--) {
     const d = new Date(); d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0,10);
+    const key = d.toLocaleDateString('sv-SE');
     days.push({ date: fmtDate(key), key, ...(records[key] || { rev:0, delivery:0, uber:0, cost:0 }) });
   }
   return days;
 }
+function getLast7(storeId)  { return getLastN(storeId, 7); }
+function getLast30(storeId) { return getLastN(storeId, 30); }
 function getTodayKpi(storeId) {
   const records = getStoreRecords(storeId);
   return records[todayStr()] || { rev:0, delivery:0, uber:0, cost:0 };
+}
+// 取昨日資料（用於和今日比較）
+function getYesterdayKpi(storeId) {
+  const records = getStoreRecords(storeId);
+  const d = new Date(); d.setDate(d.getDate() - 1);
+  return records[d.toLocaleDateString('sv-SE')] || { rev:0, delivery:0, uber:0, cost:0 };
 }
 
 // ── 日期顯示 ──
@@ -465,18 +484,31 @@ function renderAllPage() {
     <div class="overview-grid">${miniCards}</div>`;
 }
 
+// ── 趨勢變化箭頭 ──
+function trendBadge(curr, prev) {
+  if (!prev || prev === 0) return '';
+  const pct = ((curr - prev) / prev * 100).toFixed(1);
+  if (Math.abs(pct) < 1) return `<span style="font-size:11px;color:#aaa">持平</span>`;
+  const up = pct > 0;
+  return `<span style="font-size:11px;font-weight:700;color:${up?'#3bb87b':'#e05c5c'}">${up?'▲':'▼'} ${Math.abs(pct)}%</span>`;
+}
+
 // ── 渲染單店頁 ──
 function renderStorePage(store) {
-  const el = document.getElementById('page-' + store.id);
-  const kpi  = getTodayKpi(store.id);
-  const last7 = getLast7(store.id);
-  const costRate = kpi.rev ? ((kpi.cost/kpi.rev)*100).toFixed(1) : '0.0';
-  const rateClass = costRate < 33 ? 'good' : costRate < 37 ? 'warn' : 'bad';
-  const delivPct = kpi.rev ? ((kpi.delivery/kpi.rev)*100).toFixed(0) : 0;
-  const uberPct  = kpi.rev ? ((kpi.uber/kpi.rev)*100).toFixed(0) : 0;
+  const el    = document.getElementById('page-' + store.id);
+  const kpi   = getTodayKpi(store.id);
+  const prev  = getYesterdayKpi(store.id);
+  const last30 = getLast30(store.id);
+  const last7  = last30.slice(-7);
 
+  const costRate  = kpi.rev ? ((kpi.cost / kpi.rev) * 100).toFixed(1) : '0.0';
+  const rateClass = costRate < 33 ? 'good' : costRate < 37 ? 'warn' : 'bad';
+  const delivPct  = kpi.rev ? ((kpi.delivery / kpi.rev) * 100).toFixed(0) : 0;
+  const uberPct   = kpi.rev ? ((kpi.uber / kpi.rev) * 100).toFixed(0) : 0;
+
+  // 近 7 天表格
   const rows = [...last7].reverse().map(d => {
-    const rate = d.rev ? ((d.cost/d.rev)*100).toFixed(1) : '0.0';
+    const rate = d.rev ? ((d.cost / d.rev) * 100).toFixed(1) : '0.0';
     const cls  = rate < 33 ? 'good' : rate < 37 ? 'warn' : 'bad';
     const isToday = d.key === todayStr();
     return `<tr${isToday ? ' style="background:#fffdf0"' : ''}>
@@ -485,67 +517,141 @@ function renderStorePage(store) {
       <td>$${d.delivery.toLocaleString()}</td>
       <td>$${d.uber.toLocaleString()}</td>
       <td>$${d.cost.toLocaleString()}</td>
-      <td>${rate}%</td>
-      <td><span class="tbadge ${cls}">${rate < 33 ? '良好' : rate < 37 ? '注意' : '超標'}</span></td>
+      <td><span class="tbadge ${cls}">${rate}%</span></td>
     </tr>`;
   }).join('');
 
   el.innerHTML = `
     <div class="section-label">今日數值</div>
     <div class="kpi-grid">
-      <div class="kpi-card yellow"><div class="kpi-icon">💰</div><div class="kpi-label">今日營收</div><div class="kpi-val">$${kpi.rev.toLocaleString()}</div><div class="kpi-sub">單店當日</div></div>
-      <div class="kpi-card blue"><div class="kpi-icon">🛵</div><div class="kpi-label">外送金額</div><div class="kpi-val">$${kpi.delivery.toLocaleString()}</div><div class="kpi-sub">佔營收 ${delivPct}%</div></div>
-      <div class="kpi-card green"><div class="kpi-icon">📦</div><div class="kpi-label">Uber Eats</div><div class="kpi-val">$${kpi.uber.toLocaleString()}</div><div class="kpi-sub">佔營收 ${uberPct}%</div></div>
-      <div class="kpi-card red"><div class="kpi-icon">🧾</div><div class="kpi-label">食材成本率</div><div class="kpi-val">${costRate}%</div><div class="kpi-badge ${rateClass}">${costRate < 33 ? '✓ 良好' : costRate < 37 ? '⚠ 注意' : '✕ 超標'}</div></div>
-      <div class="kpi-card purple"><div class="kpi-icon">📊</div><div class="kpi-label">食材成本額</div><div class="kpi-val">$${kpi.cost.toLocaleString()}</div><div class="kpi-sub">目標 &lt; $${kpi.rev ? Math.round(kpi.rev*0.35).toLocaleString() : '—'}</div></div>
+      <div class="kpi-card yellow">
+        <div class="kpi-label">今日營收</div>
+        <div class="kpi-val">$${kpi.rev.toLocaleString()}</div>
+        <div class="kpi-sub">${trendBadge(kpi.rev, prev.rev)} 較昨日</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-label">外送金額</div>
+        <div class="kpi-val">$${kpi.delivery.toLocaleString()}</div>
+        <div class="kpi-sub">佔營收 ${delivPct}%</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-label">Uber Eats</div>
+        <div class="kpi-val">$${kpi.uber.toLocaleString()}</div>
+        <div class="kpi-sub">佔營收 ${uberPct}%</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">食材成本率</div>
+        <div class="kpi-val">${costRate}%</div>
+        <div class="kpi-badge ${rateClass}">${costRate < 33 ? '✓ 良好' : costRate < 37 ? '⚠ 注意' : '✕ 超標'}</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-label">食材成本額</div>
+        <div class="kpi-val">$${kpi.cost.toLocaleString()}</div>
+        <div class="kpi-sub">目標 &lt; $${kpi.rev ? Math.round(kpi.rev * 0.35).toLocaleString() : '—'}</div>
+      </div>
     </div>
-    <hr class="divider" />
-    <div class="section-label">本週趨勢</div>
-    <div class="chart-grid">
-      <div class="chart-card"><h3>每日營收</h3><canvas id="chart-rev-${store.id}"></canvas></div>
-      <div class="chart-card"><h3>外送 vs Uber Eats</h3><canvas id="chart-ch-${store.id}"></canvas></div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>30 天趨勢</h3>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#e8b84b"></div>營收</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#4a90d9"></div>外送</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#3bb87b"></div>Uber Eats</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#e05c5c"></div>食材成本</div>
+        </div>
+      </div>
+      <canvas id="chart-trend-${store.id}" height="120"></canvas>
     </div>
+
     <hr class="divider" />
-    <div class="section-label">每日明細（近 7 日）</div>
+    <div class="section-label">近 7 日明細</div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>日期</th><th>營收</th><th>外送</th><th>Uber Eats</th><th>食材成本</th><th>成本率</th><th>狀態</th></tr></thead>
+        <thead><tr><th>日期</th><th>營收</th><th>外送</th><th>Uber Eats</th><th>食材成本</th><th>成本率</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
 
-  // 銷毀舊圖表
-  if (charts['rev-'+store.id]) { charts['rev-'+store.id].destroy(); }
-  if (charts['ch-'+store.id])  { charts['ch-'+store.id].destroy(); }
+  // 銷毀舊圖
+  if (charts['trend-' + store.id]) charts['trend-' + store.id].destroy();
 
-  const revData  = last7.map(d => d.rev);
-  const deliData = last7.map(d => d.delivery);
-  const uberData = last7.map(d => d.uber);
-  const todayIdx = last7.findIndex(d => d.key === todayStr());
+  const labels   = last30.map(d => d.date);
+  const todayIdx = last30.findIndex(d => d.key === todayStr());
 
-  charts['rev-'+store.id] = new Chart(document.getElementById('chart-rev-'+store.id), {
-    type: 'bar',
-    data: {
-      labels: weekLabels,
-      datasets: [{ label: '營收', data: revData,
-        backgroundColor: revData.map((_,i) => i===todayIdx ? '#e8b84b' : '#1a1a2e'),
-        borderRadius: 6 }]
-    },
-    options: { responsive: true, plugins: { legend: { display: false } },
-      scales: { y: { ticks: { callback: v=>'$'+v.toLocaleString() } } } }
-  });
+  const dotRadius = (ctx) => ctx.dataIndex === todayIdx ? 7 : 4;
+  const dotStyle  = (ctx) => ctx.dataIndex === todayIdx ? 'rectRounded' : 'circle';
 
-  charts['ch-'+store.id] = new Chart(document.getElementById('chart-ch-'+store.id), {
+  charts['trend-' + store.id] = new Chart(
+    document.getElementById('chart-trend-' + store.id), {
     type: 'line',
     data: {
-      labels: weekLabels,
+      labels,
       datasets: [
-        { label: '外送', data: deliData, borderColor: '#4a90d9', backgroundColor: 'rgba(74,144,217,0.08)', fill: true, tension: 0.4, pointRadius: 4 },
-        { label: 'Uber Eats', data: uberData, borderColor: '#e8b84b', backgroundColor: 'rgba(232,184,75,0.08)', fill: true, tension: 0.4, pointRadius: 4 }
+        {
+          label: '營收', data: last30.map(d => d.rev),
+          borderColor: '#e8b84b', backgroundColor: 'rgba(232,184,75,0.07)',
+          borderWidth: 2, fill: false, tension: 0.35,
+          pointRadius: last30.map((_, i) => i === todayIdx ? 7 : 4),
+          pointBackgroundColor: last30.map((_, i) => i === todayIdx ? '#e8b84b' : '#fff'),
+          pointBorderColor: '#e8b84b', pointBorderWidth: 2,
+        },
+        {
+          label: '外送', data: last30.map(d => d.delivery),
+          borderColor: '#4a90d9', backgroundColor: 'transparent',
+          borderWidth: 2, fill: false, tension: 0.35,
+          pointRadius: last30.map((_, i) => i === todayIdx ? 7 : 4),
+          pointBackgroundColor: last30.map((_, i) => i === todayIdx ? '#4a90d9' : '#fff'),
+          pointBorderColor: '#4a90d9', pointBorderWidth: 2,
+        },
+        {
+          label: 'Uber Eats', data: last30.map(d => d.uber),
+          borderColor: '#3bb87b', backgroundColor: 'transparent',
+          borderWidth: 2, fill: false, tension: 0.35,
+          pointRadius: last30.map((_, i) => i === todayIdx ? 7 : 4),
+          pointBackgroundColor: last30.map((_, i) => i === todayIdx ? '#3bb87b' : '#fff'),
+          pointBorderColor: '#3bb87b', pointBorderWidth: 2,
+        },
+        {
+          label: '食材成本', data: last30.map(d => d.cost),
+          borderColor: '#e05c5c', backgroundColor: 'transparent',
+          borderWidth: 2, fill: false, tension: 0.35,
+          pointRadius: last30.map((_, i) => i === todayIdx ? 7 : 4),
+          pointBackgroundColor: last30.map((_, i) => i === todayIdx ? '#e05c5c' : '#fff'),
+          pointBorderColor: '#e05c5c', pointBorderWidth: 2,
+        },
       ]
     },
-    options: { responsive: true, plugins: { legend: { position: 'bottom' } },
-      scales: { y: { ticks: { callback: v=>'$'+v.toLocaleString() } } } }
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}：$${ctx.parsed.y.toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            maxTicksLimit: 10,
+            font: { size: 11 },
+            color: '#bbb',
+          },
+          grid: { display: false }
+        },
+        y: {
+          ticks: {
+            callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v),
+            font: { size: 11 },
+            color: '#bbb',
+          },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        }
+      }
+    }
   });
 }
 
