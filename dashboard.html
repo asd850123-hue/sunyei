@@ -72,7 +72,7 @@
     .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #aaa; margin-bottom: 12px; }
     .divider { border: none; border-top: 1px solid #e8eaed; margin: 8px 0 28px; }
 
-    /* ── KPI Cards ── */
+    /* ── KPI Cards (overview page) ── */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
     .kpi-card {
       background: #fff;
@@ -94,6 +94,46 @@
     .kpi-badge.good { background: #e6f9f0; color: #2a9d6f; }
     .kpi-badge.warn { background: #fff4e0; color: #c98000; }
     .kpi-badge.bad  { background: #fdecea; color: #c0392b; }
+
+    /* ── List Card (store page) ── */
+    .list-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .list-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f0f2f5;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .list-card-header h3 { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+    .list-card-header span { font-size: 12px; color: #bbb; }
+    .list-row {
+      display: flex; align-items: center;
+      padding: 13px 20px;
+      border-bottom: 1px solid #f7f8fa;
+    }
+    .list-row:last-child { border-bottom: none; }
+    .list-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0; margin-right: 14px;
+    }
+    .list-icon.yellow { background: #fff8e6; }
+    .list-icon.blue   { background: #eaf2fc; }
+    .list-icon.green  { background: #e8f9f2; }
+    .list-icon.red    { background: #fdecea; }
+    .list-icon.purple { background: #f3effe; }
+    .list-label { flex: 1; font-size: 14px; color: #555; font-weight: 500; }
+    .list-right { display: flex; align-items: center; gap: 10px; }
+    .list-val { font-size: 17px; font-weight: 700; color: #1a1a2e; }
+    .list-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+    .list-badge.good { background: #e6f9f0; color: #2a9d6f; }
+    .list-badge.warn { background: #fff4e0; color: #c98000; }
+    .list-badge.bad  { background: #fdecea; color: #c0392b; }
+    .list-trend { font-size: 12px; font-weight: 700; }
 
     /* ── Trend Chart ── */
     .chart-card {
@@ -523,33 +563,53 @@ function renderStorePage(store) {
     </tr>`;
   }).join('');
 
+  const todayLabel = new Date().toLocaleDateString('zh-TW', { month:'numeric', day:'numeric', weekday:'short' });
+
   el.innerHTML = `
-    <div class="section-label">今日數值</div>
-    <div class="kpi-grid">
-      <div class="kpi-card yellow">
-        <div class="kpi-label">今日營收</div>
-        <div class="kpi-val">$${kpi.rev.toLocaleString()}</div>
-        <div class="kpi-sub">${trendBadge(kpi.rev, prev.rev)} 較昨日</div>
+    <div class="list-card">
+      <div class="list-card-header">
+        <h3>${store.name} · 今日數值</h3>
+        <span>${todayLabel}</span>
       </div>
-      <div class="kpi-card blue">
-        <div class="kpi-label">外送金額</div>
-        <div class="kpi-val">$${kpi.delivery.toLocaleString()}</div>
-        <div class="kpi-sub">佔營收 ${delivPct}%</div>
+      <div class="list-row">
+        <div class="list-icon yellow">💰</div>
+        <div class="list-label">今日營收</div>
+        <div class="list-right">
+          <div class="list-val">$${kpi.rev.toLocaleString()}</div>
+          ${trendBadge(kpi.rev, prev.rev)}
+        </div>
       </div>
-      <div class="kpi-card green">
-        <div class="kpi-label">Uber Eats</div>
-        <div class="kpi-val">$${kpi.uber.toLocaleString()}</div>
-        <div class="kpi-sub">佔營收 ${uberPct}%</div>
+      <div class="list-row">
+        <div class="list-icon blue">🛵</div>
+        <div class="list-label">外送金額</div>
+        <div class="list-right">
+          <div class="list-val">$${kpi.delivery.toLocaleString()}</div>
+          <span style="font-size:12px;color:#bbb">佔 ${delivPct}%</span>
+        </div>
       </div>
-      <div class="kpi-card red">
-        <div class="kpi-label">食材成本率</div>
-        <div class="kpi-val">${costRate}%</div>
-        <div class="kpi-badge ${rateClass}">${costRate < 33 ? '✓ 良好' : costRate < 37 ? '⚠ 注意' : '✕ 超標'}</div>
+      <div class="list-row">
+        <div class="list-icon green">📦</div>
+        <div class="list-label">Uber Eats</div>
+        <div class="list-right">
+          <div class="list-val">$${kpi.uber.toLocaleString()}</div>
+          <span style="font-size:12px;color:#bbb">佔 ${uberPct}%</span>
+        </div>
       </div>
-      <div class="kpi-card purple">
-        <div class="kpi-label">食材成本額</div>
-        <div class="kpi-val">$${kpi.cost.toLocaleString()}</div>
-        <div class="kpi-sub">目標 &lt; $${kpi.rev ? Math.round(kpi.rev * 0.35).toLocaleString() : '—'}</div>
+      <div class="list-row">
+        <div class="list-icon red">🧾</div>
+        <div class="list-label">食材成本率</div>
+        <div class="list-right">
+          <div class="list-val">${costRate}%</div>
+          <span class="list-badge ${rateClass}">${costRate < 33 ? '✓ 良好' : costRate < 37 ? '⚠ 注意' : '✕ 超標'}</span>
+        </div>
+      </div>
+      <div class="list-row">
+        <div class="list-icon purple">💵</div>
+        <div class="list-label">食材成本額</div>
+        <div class="list-right">
+          <div class="list-val">$${kpi.cost.toLocaleString()}</div>
+          <span style="font-size:12px;color:#bbb">目標 &lt;$${kpi.rev ? Math.round(kpi.rev*0.35).toLocaleString() : '—'}</span>
+        </div>
       </div>
     </div>
 
