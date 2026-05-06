@@ -268,15 +268,28 @@ const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzH_t64QL9BjY9BMqAMp
 let _cache = null;
 
 async function fetchAllData() {
+  const local = JSON.parse(localStorage.getItem('sanye_cache') || '{}');
   try {
     const url = WEBAPP_URL + '?t=' + Date.now();
     const res = await fetch(url, { cache: 'no-store' });
     const json = await res.json();
-    _cache = json.data || {};
+    const remote = json.data || {};
+
+    // 合併：以 remote 為主，local 有但 remote 沒有的也保留
+    const merged = JSON.parse(JSON.stringify(remote));
+    for (const storeId in local) {
+      if (!merged[storeId]) merged[storeId] = {};
+      for (const date in local[storeId]) {
+        if (!merged[storeId][date]) {
+          merged[storeId][date] = local[storeId][date];
+        }
+      }
+    }
+    _cache = merged;
     localStorage.setItem('sanye_cache', JSON.stringify(_cache));
     updateSyncTime();
   } catch (e) {
-    _cache = JSON.parse(localStorage.getItem('sanye_cache') || '{}');
+    _cache = local;
   }
   return _cache;
 }
