@@ -267,13 +267,36 @@ function fmtDate(d) {
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzH_t64QL9BjY9BMqAMpm-8a9i93VqBfICP4Tx8mqlWXHBwVIrNLpCu2tiXT5QpLF3Ltw/exec';
 let _cache = null;
 
+// 把任意日期字串正規化為 yyyy-MM-dd
+function normalizeDate(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // 已是標準格式
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return null;
+  return d.toLocaleDateString('sv-SE'); // sv-SE locale 輸出 yyyy-MM-dd
+}
+
+// 把 remote 資料的日期 key 全部正規化
+function normalizeRemote(remote) {
+  const out = {};
+  for (const storeId in remote) {
+    out[storeId] = {};
+    for (const dateKey in remote[storeId]) {
+      const normalized = normalizeDate(dateKey);
+      if (normalized) out[storeId][normalized] = remote[storeId][dateKey];
+    }
+  }
+  return out;
+}
+
 async function fetchAllData() {
   const local = JSON.parse(localStorage.getItem('sanye_cache') || '{}');
   try {
     const url = WEBAPP_URL + '?t=' + Date.now();
     const res = await fetch(url, { cache: 'no-store' });
     const json = await res.json();
-    const remote = json.data || {};
+    const remote = normalizeRemote(json.data || {});
 
     // 合併：以 remote 為主，local 有但 remote 沒有的也保留
     const merged = JSON.parse(JSON.stringify(remote));
