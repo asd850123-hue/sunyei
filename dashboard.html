@@ -187,6 +187,8 @@
   <div class="brand">山也餐盒 <span>·</span> 營運儀表板</div>
   <div class="header-right">
     <div class="date-pill" id="today-date"></div>
+    <span id="sync-time" style="font-size:11px;color:#999;white-space:nowrap;"></span>
+    <button class="btn-input" style="background:#444;" onclick="manualRefresh()">↻ 重新整理</button>
     <button class="btn-input" onclick="openModal()">＋ 填寫今日資料</button>
   </div>
 </header>
@@ -267,16 +269,28 @@ let _cache = null;
 
 async function fetchAllData() {
   try {
-    const res = await fetch(WEBAPP_URL);
+    const url = WEBAPP_URL + '?t=' + Date.now();
+    const res = await fetch(url, { cache: 'no-store' });
     const json = await res.json();
     _cache = json.data || {};
     localStorage.setItem('sanye_cache', JSON.stringify(_cache));
+    updateSyncTime();
   } catch (e) {
-    // 離線時用本地快取
     _cache = JSON.parse(localStorage.getItem('sanye_cache') || '{}');
   }
   return _cache;
 }
+
+function updateSyncTime() {
+  const el = document.getElementById('sync-time');
+  if (el) el.textContent = '上次同步：' + new Date().toLocaleTimeString('zh-TW');
+}
+
+// 每 60 秒自動重新整理
+setInterval(async () => {
+  await fetchAllData();
+  renderAll();
+}, 60000);
 
 function getData() {
   return _cache || JSON.parse(localStorage.getItem('sanye_cache') || '{}');
@@ -547,6 +561,14 @@ async function submitData() {
 function renderAll() {
   renderAllPage();
   STORES.forEach(renderStorePage);
+}
+
+async function manualRefresh() {
+  const btn = document.querySelector('button[onclick="manualRefresh()"]');
+  if (btn) { btn.textContent = '同步中...'; btn.disabled = true; }
+  await fetchAllData();
+  renderAll();
+  if (btn) { btn.textContent = '↻ 重新整理'; btn.disabled = false; }
 }
 
 // ── 啟動：先從 Google Sheets 拉資料再渲染 ──
