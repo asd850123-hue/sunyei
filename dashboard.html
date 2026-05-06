@@ -440,6 +440,24 @@ function getYesterdayKpi(storeId) {
   const d = new Date(); d.setDate(d.getDate() - 1);
   return records[d.toLocaleDateString('sv-SE')] || { rev:0, delivery:0, uber:0, cost:0 };
 }
+// 取最近一筆有資料的 kpi 及日期（今日無資料時往前找）
+function getLatestKpi(storeId) {
+  const records = getStoreRecords(storeId);
+  // 先看今日
+  const today = todayStr();
+  if (records[today] && records[today].rev > 0) {
+    return { kpi: records[today], date: today, isToday: true };
+  }
+  // 往前最多 60 天找最近一筆
+  for (let i = 1; i <= 60; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toLocaleDateString('sv-SE');
+    if (records[key] && records[key].rev > 0) {
+      return { kpi: records[key], date: key, isToday: false };
+    }
+  }
+  return { kpi: { rev:0, delivery:0, uber:0, cost:0 }, date: today, isToday: true };
+}
 
 // ── 日期顯示 ──
 document.getElementById('today-date').textContent =
@@ -538,7 +556,7 @@ function trendBadge(curr, prev) {
 // ── 渲染單店頁 ──
 function renderStorePage(store) {
   const el    = document.getElementById('page-' + store.id);
-  const kpi   = getTodayKpi(store.id);
+  const { kpi, date: kpiDate, isToday } = getLatestKpi(store.id);
   const prev  = getYesterdayKpi(store.id);
   const last30 = getLast30(store.id);
   const last7  = last30.slice(-7);
@@ -547,6 +565,9 @@ function renderStorePage(store) {
   const rateClass = costRate < 33 ? 'good' : costRate < 37 ? 'warn' : 'bad';
   const delivPct  = kpi.rev ? ((kpi.delivery / kpi.rev) * 100).toFixed(0) : 0;
   const uberPct   = kpi.rev ? ((kpi.uber / kpi.rev) * 100).toFixed(0) : 0;
+  const kpiDateLabel = isToday
+    ? new Date().toLocaleDateString('zh-TW', { month:'numeric', day:'numeric', weekday:'short' })
+    : new Date(kpiDate + 'T00:00:00').toLocaleDateString('zh-TW', { month:'numeric', day:'numeric', weekday:'short' }) + ' (最近紀錄)';
 
   // 近 7 天表格
   const rows = [...last7].reverse().map(d => {
@@ -563,13 +584,11 @@ function renderStorePage(store) {
     </tr>`;
   }).join('');
 
-  const todayLabel = new Date().toLocaleDateString('zh-TW', { month:'numeric', day:'numeric', weekday:'short' });
-
   el.innerHTML = `
     <div class="list-card">
       <div class="list-card-header">
-        <h3>${store.name} · 今日數值</h3>
-        <span>${todayLabel}</span>
+        <h3>${store.name} · ${isToday ? '今日數值' : '最近紀錄'}</h3>
+        <span>${kpiDateLabel}</span>
       </div>
       <div class="list-row">
         <div class="list-icon yellow">💰</div>
