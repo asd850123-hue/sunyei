@@ -913,27 +913,40 @@
     const date = document.getElementById('date').value;
     if (!date) return;
 
-    if (READY) {
-      fetch(`${SCRIPT_URL}?action=getRecords&date=${encodeURIComponent(date)}&period=${encodeURIComponent(period)}`)
-        .then(r => r.json())
-        .then(data => {
-          // Sheet 成功回應就以 Sheet 為準，同步本機 localStorage
-          if (data.records && data.records.length > 0) {
-            const payload = { records: data.records, manager: data.manager, date, period,
-              savedAt: '雲端資料' };
-            saveToLocal(payload); // 同步更新本機
-            if (count === 0) loadSavedData(payload);
-            setSavedBar(payload);
-          } else {
-            localStorage.removeItem(historyKey(date, period)); // 雲端空了，清掉本機
-            setSavedBar(null);
-            updateStaffStats(); // 重算人員數據
-          }
-        })
-        .catch(() => checkLocalHistory()); // 只有網路失敗才用本機備援
-    } else {
-      checkLocalHistory();
+    // 1. 先顯示本機資料（即時，不等網路）
+    const raw = localStorage.getItem(historyKey(date, period));
+    if (raw) {
+      try {
+        const localData = JSON.parse(raw);
+        if (count === 0) loadSavedData(localData);
+        setSavedBar({ ...localData, savedAt: '本機資料' });
+      } catch(e) {}
     }
+
+    if (!READY) return;
+
+    // 2. 背景從 Sheet 同步（不阻塞畫面）
+    fetch(`${SCRIPT_URL}?action=getRecords&date=${encodeURIComponent(date)}&period=${encodeURIComponent(period)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.records && data.records.length > 0) {
+          const payload = { records: data.records, manager: data.manager, date, period,
+            savedAt: '雲端資料' };
+          saveToLocal(payload);
+          // 只有本機沒資料時才重載表單（避免覆蓋）
+          if (!raw) { emptyForm(); loadSavedData(payload); }
+          setSavedBar(payload);
+        } else {
+          // 雲端確認空了 → 清本機並清表單
+          if (raw) {
+            localStorage.removeItem(historyKey(date, period));
+            emptyForm();
+            setSavedBar(null);
+            updateStaffStats();
+          }
+        }
+      })
+      .catch(() => {}); // 網路失敗就用本機資料，不動
   }
 
   function checkLocalHistory() {
