@@ -35,12 +35,18 @@ function doGet(e) {
   return ContentService.createTextOutput('OK');
 }
 
+// ── 日期欄位格式化（Sheets 會把日期字串轉成 Date 物件）
+function fmtDate(val) {
+  if (val instanceof Date) return Utilities.formatDate(val, 'Asia/Taipei', 'yyyy-MM-dd');
+  return String(val).trim();
+}
+
 // ── 紀錄：讀取單一餐期 ───────────────────────────
 function handleGetRecords(date, period) {
   const sheet = getSheet(TAB_RECORD);
   const rows = sheet.getDataRange().getValues();
   const matching = rows.slice(1).filter(r =>
-    String(r[0]).trim() === date && String(r[1]).trim() === period
+    fmtDate(r[0]) === date && String(r[1]).trim() === period
   );
   if (!matching.length) return jsonOk({ records: [], manager: '' });
 
@@ -66,20 +72,20 @@ function handleGetMonthRecords(year, month) {
   const sheet = getSheet(TAB_RECORD);
   const rows = sheet.getDataRange().getValues();
   const prefix = year + '-' + String(month).padStart(2, '0');
-  const matching = rows.slice(1).filter(r => String(r[0]).startsWith(prefix));
+  const matching = rows.slice(1).filter(r => fmtDate(r[0]).startsWith(prefix));
 
   // 每個 date+period 只取最新一次送出
   const latestTimes = {};
   matching.forEach(r => {
-    const key = r[0] + '_' + r[1];
+    const key = fmtDate(r[0]) + '_' + r[1];
     const t = String(r[13]);
     if (!latestTimes[key] || t > latestTimes[key]) latestTimes[key] = t;
   });
 
-  const deduped = matching.filter(r => String(r[13]) === latestTimes[r[0] + '_' + r[1]]);
+  const deduped = matching.filter(r => String(r[13]) === latestTimes[fmtDate(r[0]) + '_' + r[1]]);
 
   const records = deduped.map(r => ({
-    date: String(r[0]), period: String(r[1]),
+    date: fmtDate(r[0]), period: String(r[1]),
     num: r[2], person: String(r[3]), item: String(r[4]),
     鹹度: r[5]==='✓', 熟度: r[6]==='✓', 美觀度: r[7]==='✓',
     燒焦: r[8]==='✓', 異物: r[9]==='✓', 異物說明: String(r[10]),
