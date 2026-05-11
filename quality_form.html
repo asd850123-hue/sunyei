@@ -912,13 +912,32 @@
   function checkHistory() {
     const date = document.getElementById('date').value;
     if (!date) return;
+
+    if (READY) {
+      fetch(`${SCRIPT_URL}?action=getRecords&date=${encodeURIComponent(date)}&period=${encodeURIComponent(period)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.records && data.records.length > 0) {
+            if (count === 0) loadSavedData({ records: data.records, manager: data.manager });
+            setSavedBar({ records: data.records, manager: data.manager,
+              date, period, savedAt: '雲端資料' });
+          } else {
+            checkLocalHistory();
+          }
+        })
+        .catch(() => checkLocalHistory());
+    } else {
+      checkLocalHistory();
+    }
+  }
+
+  function checkLocalHistory() {
+    const date = document.getElementById('date').value;
+    if (!date) return;
     const raw = localStorage.getItem(historyKey(date, period));
     if (!raw) { setSavedBar(null); return; }
-
     const data = JSON.parse(raw);
     setSavedBar(data);
-
-    // 表單為空才自動載入
     if (count === 0) loadSavedData(data);
   }
 

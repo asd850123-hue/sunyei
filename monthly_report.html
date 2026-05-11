@@ -173,6 +173,7 @@
 </div>
 
 <script>
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvuhuNxIZRi2Ccmx_wJ3nkw7x7KzgthPiKW6UvNttNb3Y5S45j2Yaw76Lwv2Vm4u8HgA/exec';
   let currentYear, currentMonth;
 
   (function init() {
@@ -189,7 +190,23 @@
     render();
   }
 
-  function loadMonthData() {
+  async function loadMonthData() {
+    try {
+      const res = await fetch(`${SCRIPT_URL}?action=getMonthRecords&year=${currentYear}&month=${currentMonth}`);
+      const data = await res.json();
+      if (data.records) {
+        const byPeriod = {};
+        data.records.forEach(r => {
+          const key = r.date + '_' + r.period;
+          if (!byPeriod[key]) byPeriod[key] = { date: r.date, period: r.period, records: [] };
+          byPeriod[key].records.push(r);
+        });
+        return Object.values(byPeriod).sort((a, b) =>
+          a.date.localeCompare(b.date) || a.period.localeCompare(b.period));
+      }
+    } catch(e) {}
+
+    // 備援：讀本機 localStorage
     const prefix = `qc_${currentYear}-${String(currentMonth).padStart(2,'0')}`;
     const entries = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -203,11 +220,13 @@
     return entries.sort((a, b) => a.date.localeCompare(b.date));
   }
 
-  function render() {
+  async function render() {
     document.getElementById('month-label').textContent =
       `${currentYear} 年 ${currentMonth} 月`;
+    document.getElementById('content').innerHTML =
+      `<div style="text-align:center;padding:40px;color:#8e8e93">載入中…</div>`;
 
-    const entries  = loadMonthData();
+    const entries  = await loadMonthData();
     const allRecs  = entries.flatMap(e =>
       e.records.map(r => ({ ...r, date: e.date, period: e.period }))
     );

@@ -9,23 +9,85 @@
 //   4. 複製部署網址，貼到 quality_form.html 的 SCRIPT_URL
 // =====================================================
 
-const SHEET_ID    = 'YOUR_GOOGLE_SHEET_ID_HERE'; // ← 改這裡
+const SHEET_ID    = '1hdDj9-qyvOxodwwLI1UpZMVBGVUKQeWeTSXzneT_I7M';
 const TAB_RECORD  = '品質紀錄';
 const TAB_STAFF   = '人員名單';
 
-// ── GET：讀取人員名單 ─────────────────────────────
+// ── GET：讀取人員名單 / 紀錄 ──────────────────────
 function doGet(e) {
   const action = e && e.parameter && e.parameter.action;
 
   if (action === 'getStaff') {
     const sheet = getSheet(TAB_STAFF);
     const rows = sheet.getDataRange().getValues();
-    // A 欄：姓名（跳過標題列）
     const staff = rows.slice(1).map(r => r[0]).filter(n => n && String(n).trim());
     return jsonOk({ staff });
   }
 
+  if (action === 'getRecords') {
+    return handleGetRecords(e.parameter.date, e.parameter.period);
+  }
+
+  if (action === 'getMonthRecords') {
+    return handleGetMonthRecords(e.parameter.year, e.parameter.month);
+  }
+
   return ContentService.createTextOutput('OK');
+}
+
+// ── 紀錄：讀取單一餐期 ───────────────────────────
+function handleGetRecords(date, period) {
+  const sheet = getSheet(TAB_RECORD);
+  const rows = sheet.getDataRange().getValues();
+  const matching = rows.slice(1).filter(r =>
+    String(r[0]).trim() === date && String(r[1]).trim() === period
+  );
+  if (!matching.length) return jsonOk({ records: [], manager: '' });
+
+  // 取最新一次送出的紀錄
+  const latestTime = matching.reduce((max, r) => {
+    const t = String(r[13]); return t > max ? t : max;
+  }, '');
+  const latest = matching.filter(r => String(r[13]) === latestTime);
+
+  const records = latest.map(r => ({
+    num: r[2], person: String(r[3]), item: String(r[4]),
+    鹹度: r[5]==='✓', 熟度: r[6]==='✓', 美觀度: r[7]==='✓',
+    燒焦: r[8]==='✓', 異物: r[9]==='✓', 異物說明: String(r[10]),
+    type: String(r[11]),
+    perfect: !r[5] && !r[6] && !r[7] && !r[8] && !r[9] && String(r[11])==='主管抽查'
+  }));
+
+  return jsonOk({ records, manager: latest[0] ? String(latest[0][12]) : '' });
+}
+
+// ── 紀錄：讀取整月 ───────────────────────────────
+function handleGetMonthRecords(year, month) {
+  const sheet = getSheet(TAB_RECORD);
+  const rows = sheet.getDataRange().getValues();
+  const prefix = year + '-' + String(month).padStart(2, '0');
+  const matching = rows.slice(1).filter(r => String(r[0]).startsWith(prefix));
+
+  // 每個 date+period 只取最新一次送出
+  const latestTimes = {};
+  matching.forEach(r => {
+    const key = r[0] + '_' + r[1];
+    const t = String(r[13]);
+    if (!latestTimes[key] || t > latestTimes[key]) latestTimes[key] = t;
+  });
+
+  const deduped = matching.filter(r => String(r[13]) === latestTimes[r[0] + '_' + r[1]]);
+
+  const records = deduped.map(r => ({
+    date: String(r[0]), period: String(r[1]),
+    num: r[2], person: String(r[3]), item: String(r[4]),
+    鹹度: r[5]==='✓', 熟度: r[6]==='✓', 美觀度: r[7]==='✓',
+    燒焦: r[8]==='✓', 異物: r[9]==='✓', 異物說明: String(r[10]),
+    type: String(r[11]), manager: String(r[12]),
+    perfect: !r[5] && !r[6] && !r[7] && !r[8] && !r[9] && String(r[11])==='主管抽查'
+  }));
+
+  return jsonOk({ records });
 }
 
 // ── POST：新增/移除人員、送出紀錄 ────────────────
