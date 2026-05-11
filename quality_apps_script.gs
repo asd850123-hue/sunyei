@@ -150,11 +150,20 @@ function handleRemoveStaff(name) {
   return jsonOk({ message: 'removed', name });
 }
 
-// ── 紀錄：送出 ───────────────────────────────────
+// ── 紀錄：送出（先清舊資料再寫入，保持 Sheet 乾淨）
 function handleSubmit(data) {
   const sheet = getSheet(TAB_RECORD);
   const submitTime = now();
 
+  // 刪除同日期+餐期的舊資料
+  const allRows = sheet.getDataRange().getValues();
+  for (let i = allRows.length - 1; i >= 1; i--) {
+    if (fmtDate(allRows[i][0]) === data.date && String(allRows[i][1]).trim() === data.period) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+
+  // 寫入最新資料
   data.records.forEach(r => {
     sheet.appendRow([
       data.date,
