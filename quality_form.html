@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>每日出餐品質控管</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', '微軟正黑體', sans-serif;
+      background: #f2f2f7;
+      color: #1c1c1e;
+      min-height: 100vh;
+      padding-bottom: 90px;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: #b91c1c;
+      color: #fff;
+      padding: 14px 14px 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .header-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+    .meta-group { display: flex; flex-direction: column; }
+    .meta-label { font-size: 11px; color: rgba(255,255,255,0.65); margin-bottom: 4px; }
+    .meta-input {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 15px;
+      padding: 7px 10px;
+    }
+    .meta-input::placeholder { color: rgba(255,255,255,0.45); }
+
+    .segment {
+      display: flex;
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .seg-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.65);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+    .seg-btn.active { background: #fff; color: #b91c1c; }
+
+    /* ── 人員設定 ── */
+    .staff-section {
+      background: #fff;
+      border-bottom: 1px solid #e5e5ea;
+    }
+    .staff-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      cursor: pointer;
+    }
+    .staff-header-left { display: flex; align-items: center; gap: 8px; }
+    .staff-title { font-size: 14px; font-weight: 600; }
+    .staff-count {
+      background: #b91c1c; color: #fff;
+      font-size: 11px; font-weight: 700;
+      border-radius: 10px; padding: 2px 7px;
+      min-width: 22px; text-align: center;
+    }
+    .staff-sync {
+      font-size: 11px; color: #8e8e93;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .sync-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #aeaeb2;
+      flex-shrink: 0;
+    }
+    .sync-dot.ok  { background: #34c759; }
+    .sync-dot.err { background: #ff3b30; }
+    .staff-arrow { color: #c7c7cc; font-size: 12px; transition: transform 0.2s; }
+    .staff-arrow.open { transform: rotate(180deg); }
+
+    .staff-body { display: none; padding: 0 14px 14px; }
+    .staff-body.open { display: block; }
+
+    .staff-cards {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-bottom: 12px;
+    }
+    .staff-card {
+      background: #f2f2f7; border-radius: 10px;
+      padding: 8px 10px; position: relative;
+    }
+    .sc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .sc-name { font-size: 14px; font-weight: 600; color: #1c1c1e; }
+    .sc-del {
+      background: #c7c7cc; color: #fff; border: none;
+      border-radius: 50%; width: 16px; height: 16px;
+      font-size: 10px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .sc-bar-wrap {
+      height: 4px; background: #e5e5ea; border-radius: 2px;
+      overflow: hidden; margin-bottom: 3px;
+    }
+    .sc-bar { height: 100%; border-radius: 2px; transition: width 0.35s; }
+    .sc-label { font-size: 11px; color: #636366; }
+    .sc-empty { height: 7px; }
+    .no-staff-hint { font-size: 13px; color: #aeaeb2; margin-bottom: 10px; }
+
+    .staff-add-row { display: flex; gap: 8px; }
+    .staff-input {
+      flex: 1; border: 1px solid #e5e5ea; border-radius: 9px;
+      padding: 9px 12px; font-size: 15px; background: #fafafa;
+      -webkit-appearance: none;
+    }
+    .staff-input:focus { outline: none; border-color: #b91c1c; }
+    .staff-add-btn {
+      background: #b91c1c; color: #fff; border: none;
+      border-radius: 9px; padding: 9px 16px;
+      font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap;
+    }
+
+    /* ── Content ── */
+    .content { padding: 14px 14px 0; }
+
+    .info-banner {
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: 10px; padding: 11px 13px;
+      margin-bottom: 14px; font-size: 13px; color: #78350f; line-height: 1.75;
+    }
+
+    .section-label {
+      font-size: 12px; font-weight: 600; color: #8e8e93;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: #d1d1d6; }
+
+    /* ── Record Card ── */
+    .card {
+      background: #fff; border-radius: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.05);
+      margin-bottom: 12px; overflow: hidden;
+    }
+    .card-header {
+      background: #b91c1c; color: #fff;
+      padding: 11px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-header.supervisor { background: #1d4ed8; }
+    .card-left { display: flex; align-items: baseline; gap: 8px; }
+    .card-num { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+    .card-badge {
+      font-size: 11px; background: rgba(255,255,255,0.22);
+      padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px;
+    }
+    .card-del {
+      background: none; border: none;
+      color: rgba(255,255,255,0.65); font-size: 22px;
+      cursor: pointer; padding: 2px 4px; line-height: 1;
+    }
+
+    .card-body { padding: 14px; }
+
+    .field-row { display: flex; gap: 10px; margin-bottom: 12px; }
+    .field { flex: 1; }
+    .field label { display: block; font-size: 12px; color: #8e8e93; margin-bottom: 5px; }
+
+    .field select {
+      width: 100%; border: 1px solid #e5e5ea; border-radius: 9px;
+      padding: 10px 12px; font-size: 15px; color: #1c1c1e;
+      background: #fafafa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath fill='none' stroke='%238e8e93' stroke-width='1.5' d='M1 1l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 12px center;
+      -webkit-appearance: none; appearance: none; padding-right: 32px;
+    }
+    .field select:focus { outline: none; border-color: #b91c1c; background-color: #fff; }
+
+    .field input[type="text"] {
+      width: 100%; border: 1px solid #e5e5ea; border-radius: 9px;
+      padding: 10px 12px; font-size: 15px; color: #1c1c1e;
+      background: #fafafa; -webkit-appearance: none;
+    }
+    .field input[type="text"]:focus { outline: none; border-color: #b91c1c; background: #fff; }
+
+    .sub-label { font-size: 12px; color: #8e8e93; margin-bottom: 8px; }
+
+    /* ── 完美按鈕 ── */
+    .perfect-btn {
+      width: 100%; padding: 18px;
+      font-size: 20px; font-weight: 800; letter-spacing: 4px;
+      border: 2.5px solid #e5e5ea; border-radius: 14px;
+      background: #f2f2f7; color: #aeaeb2;
+      cursor: pointer; margin-bottom: 14px;
+      transition: all 0.2s;
+    }
+    .perfect-btn.active {
+      background: #dcfce7; border-color: #16a34a;
+      color: #15803d;
+      box-shadow: 0 0 0 4px rgba(22,163,74,0.12);
+    }
+    .abnormal-section { transition: opacity 0.2s; }
+    .abnormal-section.locked { opacity: 0.3; pointer-events: none; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .chip-wrap { position: relative; }
+    .chip-wrap input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .chip-wrap label {
+      display: inline-block; background: #f2f2f7;
+      border: 1.5px solid transparent; border-radius: 20px;
+      padding: 7px 16px; font-size: 14px; cursor: pointer; user-select: none;
+    }
+    .chip-wrap input:checked + label {
+      background: #fee2e2; border-color: #b91c1c; color: #b91c1c; font-weight: 600;
+    }
+
+    .foreign-box { display: none; margin-top: 8px; }
+    .foreign-box input {
+      width: 100%; border: 1.5px solid #fca5a5; border-radius: 9px;
+      padding: 9px 12px; font-size: 14px; background: #fff5f5; -webkit-appearance: none;
+    }
+    .foreign-box input:focus { outline: none; border-color: #b91c1c; }
+
+    .divider { height: 1px; background: #f2f2f7; margin: 12px 0; }
+
+    /* 卡片 header 顏色 by 類型 */
+    .card-header.intercept { background: #15803d; }
+    .card-header.complaint { background: #b91c1c; }
+    /* supervisor 已有 .supervisor class = #1d4ed8 */
+
+    /* 卡片底部類型標籤 */
+    .type-badge {
+      border-radius: 10px; padding: 10px 12px;
+      text-align: center; font-size: 13px; font-weight: 600;
+    }
+    .type-badge.supervisor { background: #eff6ff; color: #1d4ed8; border: 1.5px solid #bfdbfe; }
+    .type-badge.intercept  { background: #dcfce7; color: #15803d; border: 1.5px solid #bbf7d0; }
+    .type-badge.complaint  { background: #fee2e2; color: #b91c1c; border: 1.5px solid #fecaca; }
+
+    /* ── 類型選擇底部彈窗 ── */
+    .typepick-overlay {
+      display: none; position: fixed; inset: 0; z-index: 600;
+    }
+    .typepick-overlay.show { display: block; }
+    .typepick-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+    .typepick-sheet {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: #fff; border-radius: 18px 18px 0 0;
+      padding: 20px 14px calc(20px + env(safe-area-inset-bottom));
+    }
+    .typepick-title {
+      text-align: center; font-size: 13px; color: #8e8e93;
+      font-weight: 600; letter-spacing: 0.5px; margin-bottom: 14px;
+    }
+    .typepick-btn {
+      width: 100%; display: flex; align-items: center; gap: 14px;
+      background: #f2f2f7; border: none; border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 10px; cursor: pointer; text-align: left;
+    }
+    .typepick-btn:last-child { margin-bottom: 0; }
+    .typepick-icon { font-size: 22px; flex-shrink: 0; }
+    .typepick-text { flex: 1; }
+    .typepick-text strong { display: block; font-size: 16px; color: #1c1c1e; margin-bottom: 2px; }
+    .typepick-text span { font-size: 12px; color: #8e8e93; }
+    .typepick-btn.t-supervisor { border-left: 4px solid #1d4ed8; }
+    .typepick-btn.t-intercept  { border-left: 4px solid #15803d; }
+    .typepick-btn.t-complaint  { border-left: 4px solid #b91c1c; }
+
+    /* ── Add Button ── */
+    .add-btn {
+      width: 100%; background: #fff; border: 2px dashed #d1d1d6;
+      border-radius: 14px; padding: 17px; font-size: 15px; color: #8e8e93;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin-bottom: 14px;
+    }
+    .add-circle {
+      width: 30px; height: 30px; background: #b91c1c; color: #fff;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 22px; line-height: 1;
+    }
+
+    /* ── Empty State ── */
+    .empty { text-align: center; padding: 36px 20px; color: #aeaeb2; }
+    .empty-icon { font-size: 44px; margin-bottom: 10px; }
+    .empty p { font-size: 15px; line-height: 1.6; }
+
+    /* ── Submit Bar ── */
+    .submit-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+      box-shadow: 0 -1px 0 rgba(0,0,0,0.1); z-index: 100;
+    }
+    .submit-btn {
+      width: 100%; background: #b91c1c; color: #fff; border: none;
+      border-radius: 12px; padding: 15px; font-size: 17px;
+      font-weight: 700; cursor: pointer; letter-spacing: 2px;
+    }
+    .submit-btn:active { opacity: 0.85; }
+    .submit-btn:disabled { background: #c7c7cc; letter-spacing: 0; }
+
+    /* ── Success Screen ── */
+    /* success overlay 已移除，改用按鈕 toast */
+
+    /* ── 確認刪除底部彈窗 ── */
+    .confirm-overlay {
+      display: none; position: fixed; inset: 0; z-index: 600;
+    }
+    .confirm-overlay.show { display: block; }
+    .confirm-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.45);
+    }
+    .confirm-sheet {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: #fff; border-radius: 18px 18px 0 0;
+      padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+    }
+    .confirm-name {
+      text-align: center; font-size: 17px; font-weight: 700;
+      color: #1c1c1e; margin-bottom: 6px;
+    }
+    .confirm-hint {
+      text-align: center; font-size: 14px; color: #636366;
+      margin-bottom: 20px;
+    }
+    .confirm-btns { display: flex; gap: 10px; }
+    .confirm-cancel {
+      flex: 1; background: #f2f2f7; color: #1c1c1e;
+      border: none; border-radius: 12px;
+      padding: 15px; font-size: 16px; font-weight: 600; cursor: pointer;
+    }
+    .confirm-ok {
+      flex: 1; background: #ff3b30; color: #fff;
+      border: none; border-radius: 12px;
+      padding: 15px; font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+
+    /* ── 已儲存狀態列 ── */
+    .saved-bar {
+      display: none;
+      background: #1c1c1e; color: rgba(255,255,255,0.75);
+      border-radius: 10px; padding: 9px 14px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      display: none; align-items: center; justify-content: space-between;
+    }
+    .saved-bar.show { display: flex; }
+    .saved-bar-left { display: flex; align-items: center; gap: 8px; }
+    .saved-dot { width: 7px; height: 7px; border-radius: 50%; background: #34c759; flex-shrink: 0; }
+    .saved-clear {
+      background: none; border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.6); border-radius: 6px;
+      padding: 4px 10px; font-size: 12px; cursor: pointer;
+    }
+
+    /* ── Loading spinner ── */
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.7s linear infinite; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="header">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <h1>每日出餐品質控管紀錄表</h1>
+    <button onclick="location.href='monthly_report.html'"
+      style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:8px;padding:5px 11px;font-size:12px;cursor:pointer">
+      月報 →
+    </button>
+  </div>
+  <div class="header-row">
+    <div class="meta-group">
+      <span class="meta-label">日期</span>
+      <input type="date" class="meta-input" id="date" style="width:140px" />
+    </div>
+    <div class="meta-group">
+      <span class="meta-label">餐期</span>
+      <div class="segment">
+        <button class="seg-btn active" data-period="午餐" onclick="setPeriod(this)">午餐</button>
+        <button class="seg-btn" data-period="晚餐" onclick="setPeriod(this)">晚餐</button>
+      </div>
+    </div>
+    <div class="meta-group" style="flex:1;min-width:80px">
+      <span class="meta-label">店長 / 組長</span>
+      <input type="text" class="meta-input" id="manager" placeholder="姓名" />
+    </div>
+  </div>
+</div>
+
+<!-- ── 人員設定 ── -->
+<div class="staff-section">
+  <div class="staff-header" onclick="toggleStaff()">
+    <div class="staff-header-left">
+      <span class="staff-title">人員名單</span>
+      <span class="staff-count" id="staff-count">0</span>
+      <span class="staff-sync" id="sync-status">
+        <span class="sync-dot" id="sync-dot"></span>
+        <span id="sync-text">讀取中…</span>
+      </span>
+    </div>
+    <span class="staff-arrow" id="staff-arrow">▼</span>
+  </div>
+  <div class="staff-body" id="staff-body">
+    <p class="no-staff-hint" id="no-staff-hint" style="display:none">尚未新增人員</p>
+    <div class="staff-cards" id="staff-cards"></div>
+    <div class="staff-add-row">
+      <input type="text" class="staff-input" id="staff-input"
+             placeholder="輸入姓名後新增" maxlength="10" />
+      <button class="staff-add-btn" onclick="addStaff()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Content ── -->
+<div class="content">
+  <div class="info-banner">
+    🔍 <strong>主管抽查</strong>：開餐前感官測試，可標記「完美」<br>
+    ✅ <strong>同仁攔截</strong>：出餐前發現並修正（加分）<br>
+    ❌ <strong>客訴問題</strong>：客人反映（扣分）
+  </div>
+
+  <!-- 已儲存狀態 -->
+  <div class="saved-bar" id="saved-bar">
+    <div class="saved-bar-left">
+      <span class="saved-dot"></span>
+      <span id="saved-text">已儲存</span>
+    </div>
+    <button class="saved-clear" onclick="clearForm()">清空</button>
+  </div>
+
+  <div class="section-label">品質紀錄</div>
+
+  <div id="container">
+    <div class="empty" id="empty-state">
+      <div class="empty-icon">📋</div>
+      <p>今日尚無紀錄<br>點下方按鈕新增</p>
+    </div>
+  </div>
+
+  <button class="add-btn" onclick="addRecord()">
+    <span class="add-circle">+</span>
+    新增品質紀錄
+  </button>
+</div>
+
+<!-- ── Submit Bar ── -->
+<div class="submit-bar">
+  <button class="submit-btn" id="submit-btn" onclick="submitForm()">送出今日紀錄</button>
+</div>
+
+<!-- ── 類型選擇彈窗 ── -->
+<div class="typepick-overlay" id="typepick-overlay">
+  <div class="typepick-backdrop" onclick="closeTypePick()"></div>
+  <div class="typepick-sheet">
+    <div class="typepick-title">選擇紀錄類別</div>
+    <button class="typepick-btn t-supervisor" onclick="selectType('主管抽查')">
+      <span class="typepick-icon">🔍</span>
+      <div class="typepick-text">
+        <strong>主管抽查</strong>
+        <span>開餐前感官測試</span>
+      </div>
+    </button>
+    <button class="typepick-btn t-intercept" onclick="selectType('同仁攔截')">
+      <span class="typepick-icon">✅</span>
+      <div class="typepick-text">
+        <strong>同仁攔截</strong>
+        <span>出餐前發現問題（加分）</span>
+      </div>
+    </button>
+    <button class="typepick-btn t-complaint" onclick="selectType('客訴問題')">
+      <span class="typepick-icon">❌</span>
+      <div class="typepick-text">
+        <strong>客訴問題</strong>
+        <span>客人反映（扣分）</span>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- ── 確認刪除彈窗 ── -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-backdrop" onclick="cancelRemove()"></div>
+  <div class="confirm-sheet">
+    <div class="confirm-name" id="confirm-name"></div>
+    <div class="confirm-hint">刪除後將從所有裝置的人員名單中移除</div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="cancelRemove()">取消</button>
+      <button class="confirm-ok" onclick="doRemove()">確認刪除</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  // ↓↓ 部署 Apps Script 後填入網址 ↓↓
+  const SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+  const READY = SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL_HERE';
+
+  let count = 0;
+  let period = '午餐';
+  let staffList = [];
+
+  // ── 初始化 ───────────────────────────────────────
+  (function init() {
+    const t = new Date();
+    document.getElementById('date').value =
+      `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+    loadStaff();
+
+    // 人員下拉選單變更時更新完成率卡片
+    document.getElementById('container').addEventListener('change', e => {
+      if (e.target.matches('[data-f="person"]')) updateStaffStats();
+    });
+
+    // 日期切換：清空後重載；餐期由 setPeriod 處理
+    document.getElementById('date').addEventListener('change', switchContext);
+    checkHistory(); // 初次載入：有資料且表單空白才自動載入
+
+    // 修正 IME 輸入法：組字期間 Enter 不觸發送出
+    const staffInput = document.getElementById('staff-input');
+    let composing = false;
+    staffInput.addEventListener('compositionstart', () => { composing = true; });
+    staffInput.addEventListener('compositionend',   () => { composing = false; });
+    staffInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !composing) addStaff();
+    });
+  })();
+
+  // ── 餐期 ─────────────────────────────────────────
+  function setPeriod(btn) {
+    document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    period = btn.dataset.period;
+    switchContext();
+  }
+
+  // ── 人員名單（從 Google Sheets 讀取，本機 localStorage 備援） ──
+  function loadStaff() {
+    // 先從 localStorage 快速載入（避免白畫面）
+    const cached = localStorage.getItem('staffList');
+    if (cached) {
+      staffList = JSON.parse(cached);
+      renderStaffCards();
+    }
+
+    if (!READY) {
+      setSyncStatus(false, '尚未串聯');
+      return;
+    }
+
+    // 從 Sheets 取最新名單
+    fetch(`${SCRIPT_URL}?action=getStaff`)
+      .then(r => r.json())
+      .then(data => {
+        staffList = data.staff || [];
+        localStorage.setItem('staffList', JSON.stringify(staffList));
+        renderStaffCards();
+        setSyncStatus(true, '已同步');
+      })
+      .catch(() => {
+        setSyncStatus(false, '離線模式');
+      });
+  }
+
+  function setSyncStatus(ok, text) {
+    document.getElementById('sync-dot').className = `sync-dot ${ok ? 'ok' : 'err'}`;
+    document.getElementById('sync-text').textContent = text;
+  }
+
+  function toggleStaff() {
+    document.getElementById('staff-body').classList.toggle('open');
+    document.getElementById('staff-arrow').classList.toggle('open');
+  }
+
+  function addStaff() {
+    const input = document.getElementById('staff-input');
+    const name = input.value.trim();
+    if (!name) return;
+    if (staffList.includes(name)) { alert('此姓名已存在'); return; }
+
+    staffList.push(name);
+    localStorage.setItem('staffList', JSON.stringify(staffList));
+    renderStaffCards();
+    updateAllDropdowns();
+    input.value = '';
+    input.focus();
+
+    if (!READY) return;
+    fetch(SCRIPT_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'addStaff', name }),
+    }).catch(() => {});
+  }
+
+  let pendingRemoveName = null;
+
+  function confirmRemoveStaff(name) {
+    pendingRemoveName = name;
+    document.getElementById('confirm-name').textContent = `刪除「${name}」？`;
+    document.getElementById('confirm-overlay').classList.add('show');
+  }
+
+  function cancelRemove() {
+    pendingRemoveName = null;
+    document.getElementById('confirm-overlay').classList.remove('show');
+  }
+
+  function doRemove() {
+    if (!pendingRemoveName) return;
+    removeStaff(pendingRemoveName);
+    cancelRemove();
+  }
+
+  function removeStaff(name) {
+    staffList = staffList.filter(n => n !== name);
+    localStorage.setItem('staffList', JSON.stringify(staffList));
+    renderStaffCards();
+    updateAllDropdowns();
+
+    if (!READY) return;
+    fetch(SCRIPT_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'removeStaff', name }),
+    }).catch(() => {});
+  }
+
+  function getStaffStats() {
+    const stats = {};
+    staffList.forEach(n => { stats[n] = { total: 0, perfect: 0 }; });
+
+    const currentKey = historyKey(document.getElementById('date').value, period);
+
+    // 所有已儲存的日期（排除當前正在編輯的，改用表單資料）
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key.startsWith('qc_') || key === currentKey) continue;
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        if (!data || !data.records) continue;
+        data.records.forEach(r => {
+          if (r.person && stats[r.person]) {
+            stats[r.person].total++;
+            if (r.perfect) stats[r.person].perfect++;
+          }
+        });
+      } catch(e) {}
+    }
+
+    // 當前表單（含未儲存的最新修改）
+    document.querySelectorAll('.card').forEach((card, i) => {
+      const n = i + 1;
+      const sel = card.querySelector('[data-f="person"]');
+      if (!sel || !sel.value) return;
+      const person = sel.value;
+      if (!stats[person]) return;
+      stats[person].total++;
+      if (isPerfect(n)) stats[person].perfect++;
+    });
+
+    return stats;
+  }
+
+  function renderStaffCards() {
+    const container = document.getElementById('staff-cards');
+    const hint = document.getElementById('no-staff-hint');
+    document.getElementById('staff-count').textContent = staffList.length;
+
+    hint.style.display = staffList.length === 0 ? 'block' : 'none';
+    if (staffList.length === 0) { container.innerHTML = ''; return; }
+
+    const stats = getStaffStats();
+    container.innerHTML = staffList.map(name => {
+      const s = stats[name];
+      const hasRecords = s.total > 0;
+      const pct = hasRecords ? Math.round(s.perfect / s.total * 100) : 0;
+      const barColor = !hasRecords ? '#e5e5ea'
+        : pct === 100 ? '#16a34a'
+        : pct >= 60  ? '#f59e0b'
+        : '#ef4444';
+      return `
+        <div class="staff-card">
+          <div class="sc-top">
+            <span class="sc-name">${escHtml(name)}</span>
+            <button class="sc-del" onclick='confirmRemoveStaff(${JSON.stringify(name)})'>✕</button>
+          </div>
+          <div class="sc-bar-wrap">
+            <div class="sc-bar" style="width:${hasRecords ? pct : 0}%;background:${barColor}"></div>
+          </div>
+          ${hasRecords
+            ? `<div class="sc-label">累計 ${s.total} 筆 · 完美 <strong>${pct}%</strong></div>`
+            : `<div class="sc-empty"></div>`
+          }
+        </div>`;
+    }).join('');
+  }
+
+  function updateStaffStats() { renderStaffCards(); }
+
+  function buildOptions(selected) {
+    return '<option value="">— 選擇人員 —</option>' +
+      staffList.map(n =>
+        `<option value="${escHtml(n)}" ${n === selected ? 'selected' : ''}>${escHtml(n)}</option>`
+      ).join('');
+  }
+
+  function updateAllDropdowns() {
+    document.querySelectorAll('select[data-f="person"]').forEach(sel => {
+      const cur = sel.value;
+      sel.innerHTML = buildOptions(cur);
+    });
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── 類型選擇彈窗 ──────────────────────────────────
+  function addRecord() {
+    if (count >= 12) { alert('每日最多填寫 12 筆紀錄'); return; }
+    document.getElementById('typepick-overlay').classList.add('show');
+  }
+
+  function closeTypePick() {
+    document.getElementById('typepick-overlay').classList.remove('show');
+  }
+
+  function selectType(type) {
+    closeTypePick();
+    buildCard(type, null);
+  }
+
+  // ── 建立卡片（type 必填，prefill 可選） ───────────
+  function buildCard(type, prefill) {
+    count++;
+    const n = count;
+    const nStr = String(n).padStart(2, '0');
+
+    const typeClass = type === '主管抽查' ? 'supervisor'
+                    : type === '同仁攔截' ? 'intercept'
+                    : 'complaint';
+    const typeIcon  = type === '主管抽查' ? '🔍'
+                    : type === '同仁攔截' ? '✅' : '❌';
+
+    document.getElementById('empty-state').style.display = 'none';
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = `card-${n}`;
+    card.dataset.type = type;
+
+    card.innerHTML = `
+      <div class="card-header ${typeClass}">
+        <div class="card-left">
+          <span class="card-num">${nStr}</span>
+          <span class="card-badge">${type}</span>
+        </div>
+        <button class="card-del" onclick="delRecord(${n})">×</button>
+      </div>
+      <div class="card-body">
+        <div class="field-row">
+          <div class="field" style="max-width:140px">
+            <label>負責人</label>
+            <select data-f="person">${buildOptions('')}</select>
+          </div>
+          <div class="field">
+            <label>品項名稱</label>
+            <input type="text" placeholder="例：排骨便當" data-f="item" />
+          </div>
+        </div>
+
+        ${type === '主管抽查' ? `
+          <button class="perfect-btn" id="perfect-${n}" onclick="togglePerfect(${n})">完美</button>
+        ` : ''}
+
+        <div class="abnormal-section" id="ab-${n}">
+          <div class="sub-label">異常項目（可多選）</div>
+          <div class="chips">
+            ${['鹹度','熟度','美觀度','燒焦'].map(nm => `
+              <div class="chip-wrap">
+                <input type="checkbox" id="${nm}-${n}" data-f="${nm}">
+                <label for="${nm}-${n}">${nm}</label>
+              </div>`).join('')}
+            <div class="chip-wrap">
+              <input type="checkbox" id="異物-${n}" data-f="異物" onchange="toggleForeign(${n})">
+              <label for="異物-${n}">異物</label>
+            </div>
+          </div>
+          <div class="foreign-box" id="fb-${n}">
+            <input type="text" placeholder="異物說明（碎骨、頭髮、塑膠片等）" data-f="異物說明" />
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="type-badge ${typeClass}">${typeIcon} ${type}</div>
+      </div>
+    `;
+
+    document.getElementById('container').appendChild(card);
+
+    // 載入歷史資料
+    if (prefill) {
+      const sel = card.querySelector('[data-f="person"]');
+      if (sel) sel.value = prefill.person || '';
+      const itemEl = card.querySelector('[data-f="item"]');
+      if (itemEl) itemEl.value = prefill.item || '';
+
+      ['鹹度','熟度','美觀度','燒焦','異物'].forEach(f => {
+        if (prefill[f]) {
+          const cb = card.querySelector(`[data-f="${f}"]`);
+          if (cb) cb.checked = true;
+        }
+      });
+      if (prefill.異物說明) {
+        const fd = card.querySelector('[data-f="異物說明"]');
+        if (fd) { fd.value = prefill.異物說明; document.getElementById(`fb-${n}`).style.display = 'block'; }
+      }
+      if (prefill.perfect) togglePerfect(n);
+    }
+
+    if (!prefill) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    updateStaffStats();
+  }
+
+  function delRecord(n) {
+    const card = document.getElementById(`card-${n}`);
+    if (!card) return;
+    card.remove();
+    renumber();
+    if (count === 0) document.getElementById('empty-state').style.display = 'block';
+    updateStaffStats();
+  }
+
+  function renumber() {
+    const cards = document.querySelectorAll('.card');
+    count = cards.length;
+    cards.forEach((card, i) => {
+      const n = i + 1;
+      card.id = `card-${n}`;
+      card.querySelector('.card-num').textContent = String(n).padStart(2, '0');
+      card.querySelector('.card-del').setAttribute('onclick', `delRecord(${n})`);
+    });
+  }
+
+  function toggleForeign(n) {
+    const cb = document.getElementById(`異物-${n}`);
+    document.getElementById(`fb-${n}`).style.display = cb.checked ? 'block' : 'none';
+  }
+
+  function togglePerfect(n) {
+    const btn = document.getElementById(`perfect-${n}`);
+    const section = document.getElementById(`ab-${n}`);
+    const active = btn.classList.toggle('active');
+    btn.textContent = active ? '✓ 完美 — 無異常' : '完美';
+    section.classList.toggle('locked', active);
+    if (active) {
+      section.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+      });
+      document.getElementById(`fb-${n}`).style.display = 'none';
+    }
+    updateStaffStats();
+  }
+
+  function isPerfect(n) {
+    const btn = document.getElementById(`perfect-${n}`);
+    return btn && btn.classList.contains('active');
+  }
+
+  // ── 本機儲存 ─────────────────────────────────────
+  function historyKey(d, p) { return `qc_${d}_${p}`; }
+
+  function saveToLocal(payload) {
+    localStorage.setItem(
+      historyKey(payload.date, payload.period),
+      JSON.stringify({ ...payload, savedAt: new Date().toLocaleString('zh-TW') })
+    );
+  }
+
+  function setSavedBar(data) {
+    const bar = document.getElementById('saved-bar');
+    if (!data) { bar.classList.remove('show'); return; }
+    bar.classList.add('show');
+    document.getElementById('saved-text').textContent =
+      `已儲存 ${data.records.length} 筆　${data.savedAt}`;
+  }
+
+  function checkHistory() {
+    const date = document.getElementById('date').value;
+    if (!date) return;
+    const raw = localStorage.getItem(historyKey(date, period));
+    if (!raw) { setSavedBar(null); return; }
+
+    const data = JSON.parse(raw);
+    setSavedBar(data);
+
+    // 表單為空才自動載入
+    if (count === 0) loadSavedData(data);
+  }
+
+  function loadSavedData(data) {
+    document.getElementById('manager').value = data.manager || '';
+    data.records.forEach(r => buildCard(r.type, r));
+    updateStaffStats();
+  }
+
+  function emptyForm() {
+    document.getElementById('container').innerHTML = `
+      <div class="empty" id="empty-state">
+        <div class="empty-icon">📋</div>
+        <p>今日尚無紀錄<br>點下方按鈕新增</p>
+      </div>`;
+    count = 0;
+    updateStaffStats();
+  }
+
+  function clearForm() {
+    if (!confirm('確定清空所有紀錄？')) return;
+    emptyForm();
+    setSavedBar(null);
+  }
+
+  // 切換日期或餐期：靜默清空後重載對應儲存
+  function switchContext() {
+    emptyForm();
+    document.getElementById('manager').value = '';
+    checkHistory();
+  }
+
+  // ── 送出 ─────────────────────────────────────────
+  function collectData() {
+    const date = document.getElementById('date').value;
+    const manager = document.getElementById('manager').value.trim();
+    const records = [];
+
+    document.querySelectorAll('.card').forEach((card, i) => {
+      const n = i + 1;
+      const get = f => card.querySelector(`[data-f="${f}"]`);
+      const type    = card.dataset.type || '';
+      const perfect = isPerfect(n);
+      const abnormals = perfect ? [] : ['鹹度','熟度','美觀度','燒焦','異物']
+        .filter(f => { const el = get(f); return el && el.checked; });
+      records.push({
+        num:      String(n).padStart(2, '0'),
+        person:   get('person')   ? get('person').value         : '',
+        item:     get('item')     ? get('item').value.trim()    : '',
+        perfect,
+        鹹度:    !perfect && get('鹹度')    ? get('鹹度').checked   : false,
+        熟度:    !perfect && get('熟度')    ? get('熟度').checked   : false,
+        美觀度:  !perfect && get('美觀度')  ? get('美觀度').checked : false,
+        燒焦:    !perfect && get('燒焦')    ? get('燒焦').checked   : false,
+        異物:    !perfect && get('異物')    ? get('異物').checked   : false,
+        異物說明:get('異物說明') ? get('異物說明').value.trim(): '',
+        type,
+        abnormals: perfect ? '完美' : abnormals.join('、'),
+      });
+    });
+
+    return { date, period, manager, records };
+  }
+
+  function submitForm() {
+    const payload = collectData();
+    const { date, period, manager, records } = payload;
+    if (!date)           { alert('請填寫日期'); return; }
+    if (!manager)        { alert('請填寫店長 / 組長姓名'); return; }
+    if (!records.length) { alert('請至少新增一筆紀錄'); return; }
+
+    for (const r of records) {
+      if (!r.item) { alert(`第 ${r.num} 筆：請填寫品項名稱`); return; }
+      if (!r.perfect && !r.abnormals) { alert(`第 ${r.num} 筆：請勾選異常項目，或點「完美」按鈕`); return; }
+    }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> 儲存中…';
+
+    const doSave = (remote) => {
+      saveToLocal(payload);
+      setSavedBar({ ...payload, savedAt: new Date().toLocaleString('zh-TW') });
+      btn.style.background = '#16a34a';
+      btn.innerHTML = '✓ 已儲存' + (remote ? '' : '　（測試模式）');
+      setTimeout(() => {
+        btn.style.background = '';
+        btn.innerHTML = '更新紀錄';
+        btn.disabled = false;
+      }, 2200);
+    };
+
+    if (!READY) { doSave(false); return; }
+
+    fetch(SCRIPT_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'submitRecord', ...payload }),
+    })
+    .then(() => doSave(true))
+    .catch(() => {
+      alert('送出失敗，請確認網路後重試');
+      btn.disabled = false;
+      btn.innerHTML = '送出今日紀錄';
+      btn.style.background = '';
+    });
+  }
+</script>
+</body>
+</html>
