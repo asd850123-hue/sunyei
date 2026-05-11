@@ -933,17 +933,15 @@
           const payload = { records: data.records, manager: data.manager, date, period,
             savedAt: '雲端資料' };
           saveToLocal(payload);
-          // 只有本機沒資料時才重載表單（避免覆蓋）
-          if (!raw) { emptyForm(); loadSavedData(payload); }
+          emptyForm();
+          loadSavedData(payload);
           setSavedBar(payload);
         } else {
           // 雲端確認空了 → 清本機並清表單
-          if (raw) {
-            localStorage.removeItem(historyKey(date, period));
-            emptyForm();
-            setSavedBar(null);
-            updateStaffStats();
-          }
+          localStorage.removeItem(historyKey(date, period));
+          emptyForm();
+          setSavedBar(null);
+          updateStaffStats();
         }
       })
       .catch(() => {}); // 網路失敗就用本機資料，不動
