@@ -959,8 +959,16 @@
 
   function clearForm() {
     if (!confirm('確定清空所有紀錄？')) return;
+    const date = document.getElementById('date').value;
     emptyForm();
     setSavedBar(null);
+    localStorage.removeItem(historyKey(date, period));
+    if (!READY || !date) return;
+    fetch(SCRIPT_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'clearRecords', date, period }),
+    }).catch(() => {});
   }
 
   // 切換日期或餐期：靜默清空後重載對應儲存

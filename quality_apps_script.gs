@@ -96,15 +96,29 @@ function handleGetMonthRecords(year, month) {
   return jsonOk({ records });
 }
 
+// ── 紀錄：清空特定日期+餐期 ─────────────────────
+function handleClearRecords(date, period) {
+  const sheet = getSheet(TAB_RECORD);
+  const data = sheet.getDataRange().getValues();
+  // 從最後一列往前刪，避免索引偏移
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (fmtDate(data[i][0]) === date && String(data[i][1]).trim() === period) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+  return jsonOk({ success: true });
+}
+
 // ── POST：新增/移除人員、送出紀錄 ────────────────
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
 
-    if (action === 'addStaff')    return handleAddStaff(data.name);
-    if (action === 'removeStaff') return handleRemoveStaff(data.name);
+    if (action === 'addStaff')     return handleAddStaff(data.name);
+    if (action === 'removeStaff')  return handleRemoveStaff(data.name);
     if (action === 'submitRecord') return handleSubmit(data);
+    if (action === 'clearRecords') return handleClearRecords(data.date, data.period);
 
     return jsonOk({ message: 'unknown action' });
   } catch (err) {
