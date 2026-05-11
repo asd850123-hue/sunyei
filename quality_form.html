@@ -979,6 +979,7 @@
   // 切換日期或餐期：靜默清空後重載對應儲存
   function switchContext() {
     emptyForm();
+    setSavedBar(null);
     document.getElementById('manager').value = '';
     checkHistory();
   }
