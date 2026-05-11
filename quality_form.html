@@ -917,13 +917,17 @@
       fetch(`${SCRIPT_URL}?action=getRecords&date=${encodeURIComponent(date)}&period=${encodeURIComponent(period)}`)
         .then(r => r.json())
         .then(data => {
-          // Sheet 成功回應就以 Sheet 為準，不管有無資料
+          // Sheet 成功回應就以 Sheet 為準，同步本機 localStorage
           if (data.records && data.records.length > 0) {
-            if (count === 0) loadSavedData({ records: data.records, manager: data.manager });
-            setSavedBar({ records: data.records, manager: data.manager,
-              date, period, savedAt: '雲端資料' });
+            const payload = { records: data.records, manager: data.manager, date, period,
+              savedAt: '雲端資料' };
+            saveToLocal(payload); // 同步更新本機
+            if (count === 0) loadSavedData(payload);
+            setSavedBar(payload);
           } else {
-            setSavedBar(null); // Sheet 明確回傳空 → 顯示空表單
+            localStorage.removeItem(historyKey(date, period)); // 雲端空了，清掉本機
+            setSavedBar(null);
+            updateStaffStats(); // 重算人員數據
           }
         })
         .catch(() => checkLocalHistory()); // 只有網路失敗才用本機備援
