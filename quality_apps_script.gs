@@ -18,18 +18,32 @@ function doGet(e) {
   const action = e && e.parameter && e.parameter.action;
 
   if (action === 'getStaff') {
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get('staff');
+    if (cached) return jsonOk(JSON.parse(cached));
     const sheet = getSheet(TAB_STAFF);
     const rows = sheet.getDataRange().getValues();
     const staff = rows.slice(1).map(r => r[0]).filter(n => n && String(n).trim());
+    cache.put('staff', JSON.stringify({ staff }), 60);
     return jsonOk({ staff });
   }
 
   if (action === 'getRecords') {
-    return handleGetRecords(e.parameter.date, e.parameter.period);
+    const { date, period } = e.parameter;
+    const cache = CacheService.getScriptCache();
+    const key = 'rec_' + date + '_' + period;
+    const cached = cache.get(key);
+    if (cached) return jsonOk(JSON.parse(cached));
+    return handleGetRecords(date, period);
   }
 
   if (action === 'getMonthRecords') {
-    return handleGetMonthRecords(e.parameter.year, e.parameter.month);
+    const { year, month } = e.parameter;
+    const cache = CacheService.getScriptCache();
+    const key = 'month_' + year + '_' + month;
+    const cached = cache.get(key);
+    if (cached) return jsonOk(JSON.parse(cached));
+    return handleGetMonthRecords(year, month);
   }
 
   return ContentService.createTextOutput('OK');
@@ -41,6 +55,13 @@ function fmtDate(val) {
   return String(val).trim();
 }
 
+// ── 快取工具 ─────────────────────────────────────
+function clearCache(date, period) {
+  const cache = CacheService.getScriptCache();
+  cache.remove('rec_' + date + '_' + period);
+  if (date) cache.remove('month_' + date.substring(0, 4) + '_' + parseInt(date.substring(5, 7)));
+}
+
 // ── 紀錄：讀取單一餐期 ───────────────────────────
 function handleGetRecords(date, period) {
   const sheet = getSheet(TAB_RECORD);
@@ -48,23 +69,25 @@ function handleGetRecords(date, period) {
   const matching = rows.slice(1).filter(r =>
     fmtDate(r[0]) === date && String(r[1]).trim() === period
   );
-  if (!matching.length) return jsonOk({ records: [], manager: '' });
 
-  // 取最新一次送出的紀錄
-  const latestTime = matching.reduce((max, r) => {
-    const t = String(r[13]); return t > max ? t : max;
-  }, '');
-  const latest = matching.filter(r => String(r[13]) === latestTime);
+  const result = { records: [], manager: '' };
+  if (matching.length) {
+    const latestTime = matching.reduce((max, r) => {
+      const t = String(r[13]); return t > max ? t : max;
+    }, '');
+    const latest = matching.filter(r => String(r[13]) === latestTime);
+    result.records = latest.map(r => ({
+      num: r[2], person: String(r[3]), item: String(r[4]),
+      鹹度: r[5]==='✓', 熟度: r[6]==='✓', 美觀度: r[7]==='✓',
+      燒焦: r[8]==='✓', 異物: r[9]==='✓', 異物說明: String(r[10]),
+      type: String(r[11]),
+      perfect: !r[5] && !r[6] && !r[7] && !r[8] && !r[9] && String(r[11])==='主管抽查'
+    }));
+    result.manager = String(latest[0][12]);
+  }
 
-  const records = latest.map(r => ({
-    num: r[2], person: String(r[3]), item: String(r[4]),
-    鹹度: r[5]==='✓', 熟度: r[6]==='✓', 美觀度: r[7]==='✓',
-    燒焦: r[8]==='✓', 異物: r[9]==='✓', 異物說明: String(r[10]),
-    type: String(r[11]),
-    perfect: !r[5] && !r[6] && !r[7] && !r[8] && !r[9] && String(r[11])==='主管抽查'
-  }));
-
-  return jsonOk({ records, manager: latest[0] ? String(latest[0][12]) : '' });
+  CacheService.getScriptCache().put('rec_' + date + '_' + period, JSON.stringify(result), 60);
+  return jsonOk(result);
 }
 
 // ── 紀錄：讀取整月 ───────────────────────────────
@@ -84,7 +107,8 @@ function handleGetMonthRecords(year, month) {
 
   const deduped = matching.filter(r => String(r[13]) === latestTimes[fmtDate(r[0]) + '_' + r[1]]);
 
-  const records = deduped.map(r => ({
+  const result = { records: [] };
+  result.records = deduped.map(r => ({
     date: fmtDate(r[0]), period: String(r[1]),
     num: r[2], person: String(r[3]), item: String(r[4]),
     鹹度: r[5]==='✓', 熟度: r[6]==='✓', 美觀度: r[7]==='✓',
@@ -93,11 +117,14 @@ function handleGetMonthRecords(year, month) {
     perfect: !r[5] && !r[6] && !r[7] && !r[8] && !r[9] && String(r[11])==='主管抽查'
   }));
 
-  return jsonOk({ records });
+  const key = 'month_' + year + '_' + month;
+  CacheService.getScriptCache().put(key, JSON.stringify(result), 60);
+  return jsonOk(result);
 }
 
 // ── 紀錄：清空特定日期+餐期 ─────────────────────
 function handleClearRecords(date, period) {
+  clearCache(date, period);
   const sheet = getSheet(TAB_RECORD);
   const data = sheet.getDataRange().getValues();
   // 從最後一列往前刪，避免索引偏移
@@ -115,8 +142,8 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
 
-    if (action === 'addStaff')     return handleAddStaff(data.name);
-    if (action === 'removeStaff')  return handleRemoveStaff(data.name);
+    if (action === 'addStaff')     { CacheService.getScriptCache().remove('staff'); return handleAddStaff(data.name); }
+    if (action === 'removeStaff')  { CacheService.getScriptCache().remove('staff'); return handleRemoveStaff(data.name); }
     if (action === 'submitRecord') return handleSubmit(data);
     if (action === 'clearRecords') return handleClearRecords(data.date, data.period);
 
@@ -152,6 +179,7 @@ function handleRemoveStaff(name) {
 
 // ── 紀錄：送出（先清舊資料再寫入，保持 Sheet 乾淨）
 function handleSubmit(data) {
+  clearCache(data.date, data.period);
   const sheet = getSheet(TAB_RECORD);
   const submitTime = now();
 
