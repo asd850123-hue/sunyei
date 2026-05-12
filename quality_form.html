@@ -136,6 +136,44 @@
       font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap;
     }
 
+    /* ── 今日數據 ── */
+    .daily-summary {
+      margin: 0 14px 0;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+    .ds-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 14px 10px;
+      cursor: pointer;
+    }
+    .ds-title { font-size: 14px; font-weight: 700; color: #1c1c1e; }
+    .ds-periods { display: flex; gap: 6px; }
+    .ds-dot {
+      font-size: 11px; padding: 2px 8px; border-radius: 10px;
+      font-weight: 600;
+    }
+    .ds-dot.filled { background: #b91c1c; color: #fff; }
+    .ds-dot.empty  { background: #e5e5ea; color: #8e8e93; }
+    .ds-body {
+      padding: 0 14px 14px;
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .ds-stat {
+      background: #f2f2f7; border-radius: 10px;
+      padding: 10px 10px 8px; text-align: center;
+    }
+    .ds-num { font-size: 22px; font-weight: 800; line-height: 1.1; }
+    .ds-lbl { font-size: 11px; color: #636366; margin-top: 2px; }
+    .ds-sub { font-size: 11px; font-weight: 600; margin-top: 3px; }
+    .ds-stat.sup .ds-num { color: #1d4ed8; }
+    .ds-stat.int .ds-num { color: #16a34a; }
+    .ds-stat.cmp .ds-num { color: #b91c1c; }
+    .ds-divider { height: 1px; background: #f2f2f7; margin: 0 14px; }
+
     /* ── Content ── */
     .content { padding: 14px 14px 0; }
 
@@ -434,6 +472,32 @@
   </div>
 </div>
 
+<!-- ── 今日數據摘要 ── -->
+<div class="daily-summary" id="daily-summary">
+  <div class="ds-header" onclick="toggleDailySummary()">
+    <span class="ds-title">📊 今日數據</span>
+    <div class="ds-periods" id="ds-periods"></div>
+  </div>
+  <div class="ds-divider"></div>
+  <div class="ds-body">
+    <div class="ds-stat sup">
+      <div class="ds-num" id="ds-sup">—</div>
+      <div class="ds-lbl">主管抽查</div>
+      <div class="ds-sub" id="ds-perf" style="color:#1d4ed8">—</div>
+    </div>
+    <div class="ds-stat int">
+      <div class="ds-num" id="ds-int">—</div>
+      <div class="ds-lbl">同仁攔截</div>
+      <div class="ds-sub" style="color:#16a34a">加分</div>
+    </div>
+    <div class="ds-stat cmp">
+      <div class="ds-num" id="ds-cmp">—</div>
+      <div class="ds-lbl">客訴問題</div>
+      <div class="ds-sub" style="color:#b91c1c">扣分</div>
+    </div>
+  </div>
+</div>
+
 <!-- ── Content ── -->
 <div class="content">
   <div class="info-banner">
@@ -536,8 +600,9 @@
     });
 
     // 日期切換：清空後重載；餐期由 setPeriod 處理
-    document.getElementById('date').addEventListener('change', switchContext);
+    document.getElementById('date').addEventListener('change', () => { switchContext(); updateDailySummary(); });
     checkHistory(); // 初次載入：有資料且表單空白才自動載入
+    updateDailySummary();
 
     // 修正 IME 輸入法：組字期間 Enter 不觸發送出
     const staffInput = document.getElementById('staff-input');
@@ -901,6 +966,56 @@
     );
   }
 
+  // ── 今日數據摘要 ───────────────────────────────
+  function toggleDailySummary() {
+    document.getElementById('daily-summary').classList.toggle('collapsed');
+  }
+
+  function updateDailySummary() {
+    const date = document.getElementById('date').value;
+    if (!date) return;
+    const periods = ['午餐', '晚餐'];
+    const allRecs = [];
+    const filled = {};
+
+    periods.forEach(p => {
+      const raw = localStorage.getItem(historyKey(date, p));
+      if (raw) {
+        try {
+          const d = JSON.parse(raw);
+          if (d.records && d.records.length > 0) {
+            filled[p] = true;
+            d.records.forEach(r => allRecs.push(r));
+          }
+        } catch(e) {}
+      }
+    });
+
+    // 餐期圓點
+    document.getElementById('ds-periods').innerHTML = periods.map(p =>
+      `<span class="ds-dot ${filled[p] ? 'filled' : 'empty'}">${p}</span>`
+    ).join('');
+
+    if (!allRecs.length) {
+      ['ds-sup','ds-int','ds-cmp'].forEach(id => document.getElementById(id).textContent = '—');
+      document.getElementById('ds-perf').textContent = '—';
+      return;
+    }
+
+    const sup  = allRecs.filter(r => r.type === '主管抽查');
+    const perf = sup.filter(r => r.perfect);
+    const int_ = allRecs.filter(r => r.type === '同仁攔截');
+    const cmp  = allRecs.filter(r => r.type === '客訴問題');
+    const pct  = sup.length ? Math.round(perf.length / sup.length * 100) : null;
+
+    document.getElementById('ds-sup').textContent = sup.length;
+    document.getElementById('ds-int').textContent = int_.length;
+    document.getElementById('ds-cmp').textContent = cmp.length;
+    document.getElementById('ds-perf').textContent = pct !== null ? `完美 ${pct}%` : '—';
+    document.getElementById('ds-perf').style.color =
+      pct === null ? '#8e8e93' : pct === 100 ? '#16a34a' : pct >= 60 ? '#f59e0b' : '#b91c1c';
+  }
+
   function setSavedBar(data) {
     const bar = document.getElementById('saved-bar');
     if (!data) { bar.classList.remove('show'); return; }
@@ -979,6 +1094,7 @@
     emptyForm();
     setSavedBar(null);
     localStorage.removeItem(historyKey(date, period));
+    updateDailySummary();
     if (!READY || !date) return;
     fetch(SCRIPT_URL, {
       method: 'POST', mode: 'no-cors',
@@ -1045,6 +1161,7 @@
 
     const doSave = (remote) => {
       saveToLocal(payload);
+      updateDailySummary();
       setSavedBar({ ...payload, savedAt: new Date().toLocaleString('zh-TW') });
       btn.style.background = '#16a34a';
       btn.innerHTML = '✓ 已儲存' + (remote ? '' : '　（測試模式）');
