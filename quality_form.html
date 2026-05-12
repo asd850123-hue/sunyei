@@ -150,10 +150,11 @@
       cursor: pointer;
     }
     .ds-title { font-size: 14px; font-weight: 700; color: #1c1c1e; }
-    .ds-periods { display: flex; gap: 6px; }
+    .ds-periods { display: flex; gap: 6px; flex-shrink: 0; }
     .ds-dot {
-      font-size: 11px; padding: 2px 8px; border-radius: 10px;
-      font-weight: 600;
+      font-size: 11px; padding: 2px 9px; border-radius: 10px;
+      font-weight: 600; white-space: nowrap; flex-shrink: 0;
+      line-height: 1.6;
     }
     .ds-dot.filled { background: #b91c1c; color: #fff; }
     .ds-dot.empty  { background: #e5e5ea; color: #8e8e93; }
