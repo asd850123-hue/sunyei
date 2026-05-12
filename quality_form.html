@@ -150,13 +150,12 @@
       cursor: pointer;
     }
     .ds-title { font-size: 14px; font-weight: 700; color: #1c1c1e; }
-    .ds-periods { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+    .ds-periods { display: flex; gap: 5px; flex-shrink: 0; align-items: center; }
     .ds-dot {
-      display: inline-block;
-      font-size: 12px; padding: 3px 10px; border-radius: 12px;
-      font-weight: 700; white-space: nowrap; flex-shrink: 0;
-      line-height: 1.5; width: 44px; text-align: center;
-      align-self: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
     }
     .ds-dot.filled { background: #b91c1c; color: #fff; }
     .ds-dot.empty  { background: #e5e5ea; color: #8e8e93; }
@@ -996,7 +995,7 @@
 
     // 餐期圓點
     document.getElementById('ds-periods').innerHTML = periods.map(p =>
-      `<span class="ds-dot ${filled[p] ? 'filled' : 'empty'}">${p}</span>`
+      `<span class="ds-dot ${filled[p] ? 'filled' : 'empty'}">${p[0]}</span>`
     ).join('');
 
     if (!allRecs.length) {
