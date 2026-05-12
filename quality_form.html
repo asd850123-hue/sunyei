@@ -152,9 +152,9 @@
     .ds-title { font-size: 14px; font-weight: 700; color: #1c1c1e; }
     .ds-periods { display: flex; gap: 6px; flex-shrink: 0; }
     .ds-dot {
-      font-size: 14px; padding: 6px 14px; border-radius: 20px;
+      font-size: 12px; padding: 3px 10px; border-radius: 12px;
       font-weight: 700; white-space: nowrap; flex-shrink: 0;
-      line-height: 1.4; min-width: 52px; text-align: center;
+      line-height: 1.5; min-width: 44px; text-align: center;
     }
     .ds-dot.filled { background: #b91c1c; color: #fff; }
     .ds-dot.empty  { background: #e5e5ea; color: #8e8e93; }
@@ -1059,6 +1059,7 @@
           setSavedBar(null);
           updateStaffStats();
         }
+        updateDailySummary();
       })
       .catch(() => {}); // 網路失敗就用本機資料，不動
   }
