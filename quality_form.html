@@ -994,9 +994,13 @@
     });
 
     // 餐期圓點
-    document.getElementById('ds-periods').innerHTML = periods.map(p =>
-      `<span class="ds-dot ${filled[p] ? 'filled' : 'empty'}">${p[0]}</span>`
-    ).join('');
+    const dotStyle = 'width:22px;height:22px;border-radius:50%;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;';
+    document.getElementById('ds-periods').innerHTML = periods.map(p => {
+      const s = filled[p]
+        ? `background:#b91c1c;color:#fff;`
+        : `background:#e5e5ea;color:#8e8e93;`;
+      return `<span style="${dotStyle}${s}">${p[0]}</span>`;
+    }).join('');
 
     if (!allRecs.length) {
       ['ds-sup','ds-int','ds-cmp'].forEach(id => document.getElementById(id).textContent = '—');
