@@ -150,11 +150,13 @@
       cursor: pointer;
     }
     .ds-title { font-size: 14px; font-weight: 700; color: #1c1c1e; }
-    .ds-periods { display: flex; gap: 6px; flex-shrink: 0; }
+    .ds-periods { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
     .ds-dot {
+      display: inline-block;
       font-size: 12px; padding: 3px 10px; border-radius: 12px;
       font-weight: 700; white-space: nowrap; flex-shrink: 0;
-      line-height: 1.5; min-width: 44px; text-align: center;
+      line-height: 1.5; width: 44px; text-align: center;
+      align-self: center;
     }
     .ds-dot.filled { background: #b91c1c; color: #fff; }
     .ds-dot.empty  { background: #e5e5ea; color: #8e8e93; }
