@@ -64,7 +64,7 @@
     .stat-label { font-size: 12px; color: #8e8e93; }
     .stat-card.blue  .stat-num { color: #1d4ed8; }
     .stat-card.green .stat-num { color: #16a34a; }
-    .stat-card.red   .stat-num { color: #b91c1c; }
+    .stat-card.red   .stat-num { color: #6B8FA3; }
     .stat-card.dark  .stat-num { color: #1c1c1e; }
 
     /* ── 品質指標 ── */
@@ -100,7 +100,7 @@
       font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600;
     }
     .tag.intercept { background: #dcfce7; color: #15803d; }
-    .tag.complaint { background: #fee2e2; color: #b91c1c; }
+    .tag.complaint { background: #fee2e2; color: #6B8FA3; }
     .tag.perfect   { background: #eff6ff; color: #1d4ed8; }
 
     /* ── 異常分析 ── */
@@ -111,9 +111,9 @@
     }
     .ab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
     .ab-name { font-size: 14px; font-weight: 600; }
-    .ab-count { font-size: 14px; font-weight: 800; color: #b91c1c; }
+    .ab-count { font-size: 14px; font-weight: 800; color: #6B8FA3; }
     .ab-bar-wrap { height: 6px; background: #f2f2f7; border-radius: 3px; overflow: hidden; }
-    .ab-bar { height: 100%; background: #b91c1c; border-radius: 3px; }
+    .ab-bar { height: 100%; background: #6B8FA3; border-radius: 3px; }
 
     /* ── 每日紀錄 ── */
     .day-row {
@@ -129,7 +129,7 @@
     }
     .day-badge.s { background: #eff6ff; color: #1d4ed8; }
     .day-badge.i { background: #dcfce7; color: #15803d; }
-    .day-badge.c { background: #fee2e2; color: #b91c1c; }
+    .day-badge.c { background: #fee2e2; color: #6B8FA3; }
 
     /* ── 獎金試算 ── */
     .bonus-card {
@@ -311,19 +311,19 @@
       <div class="metric-card">
         <div class="metric-row">
           <span class="metric-name">🔍 抽查完美率</span>
-          <span class="metric-pct" style="color:${perfPct>=80?'#16a34a':perfPct>=60?'#f59e0b':'#b91c1c'}">${perfPct}%</span>
+          <span class="metric-pct" style="color:${perfPct>=80?'#16a34a':perfPct>=60?'#f59e0b':'#6B8FA3'}">${perfPct}%</span>
         </div>
         <div class="bar-wrap">
-          <div class="bar" style="width:${perfPct}%;background:${perfPct>=80?'#16a34a':perfPct>=60?'#f59e0b':'#b91c1c'}"></div>
+          <div class="bar" style="width:${perfPct}%;background:${perfPct>=80?'#16a34a':perfPct>=60?'#f59e0b':'#6B8FA3'}"></div>
         </div>
       </div>
       <div class="metric-card">
         <div class="metric-row">
           <span class="metric-name">❌ 客訴次數</span>
-          <span class="metric-pct" style="color:${cmpRecs.length===0?'#16a34a':cmpRecs.length<=2?'#f59e0b':'#b91c1c'}">${cmpRecs.length} 次</span>
+          <span class="metric-pct" style="color:${cmpRecs.length===0?'#16a34a':cmpRecs.length<=2?'#f59e0b':'#6B8FA3'}">${cmpRecs.length} 次</span>
         </div>
         <div class="bar-wrap">
-          <div class="bar" style="width:${Math.min(cmpPct*3,100)}%;background:${cmpRecs.length===0?'#16a34a':cmpRecs.length<=2?'#f59e0b':'#b91c1c'}"></div>
+          <div class="bar" style="width:${Math.min(cmpPct*3,100)}%;background:${cmpRecs.length===0?'#16a34a':cmpRecs.length<=2?'#f59e0b':'#6B8FA3'}"></div>
         </div>
       </div>
 
