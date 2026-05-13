@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>出餐品質管理表｜使用教學</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', '微軟正黑體', sans-serif;
+      background: #f2f2f7;
+      color: #1c1c1e;
+      padding-bottom: 60px;
+    }
+
+    .header {
+      background: #b91c1c;
+      color: #fff;
+      padding: 20px 16px 18px;
+    }
+    .header h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .header p  { font-size: 13px; color: rgba(255,255,255,0.7); }
+
+    .toc {
+      background: #fff;
+      margin: 14px 14px 0;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+    .toc-title { font-size: 12px; font-weight: 700; color: #8e8e93; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; }
+    .toc a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 0;
+      text-decoration: none; color: #1c1c1e;
+      font-size: 14px; font-weight: 500;
+      border-bottom: 1px solid #f2f2f7;
+    }
+    .toc a:last-child { border-bottom: none; }
+    .toc-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: #b91c1c; color: #fff;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .toc-arrow { margin-left: auto; color: #c7c7cc; font-size: 16px; }
+
+    .section {
+      margin: 18px 14px 0;
+    }
+    .section-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 12px;
+    }
+    .section-num {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: #b91c1c; color: #fff;
+      font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .section-title { font-size: 16px; font-weight: 700; }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+      margin-bottom: 10px;
+    }
+
+    .step {
+      display: flex; gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid #f2f2f7;
+    }
+    .step:last-child { border-bottom: none; padding-bottom: 0; }
+    .step:first-child { padding-top: 0; }
+    .step-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: #fff1f2; color: #b91c1c;
+      font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-body {}
+    .step-label { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .step-desc  { font-size: 13px; color: #636366; line-height: 1.5; }
+
+    .tip {
+      background: #fff7ed;
+      border-left: 3px solid #f59e0b;
+      border-radius: 0 10px 10px 0;
+      padding: 10px 12px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #92400e;
+      line-height: 1.5;
+    }
+    .tip strong { display: block; margin-bottom: 2px; }
+
+    .note {
+      background: #f0fdf4;
+      border-left: 3px solid #16a34a;
+      border-radius: 0 10px 10px 0;
+      padding: 10px 12px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #14532d;
+      line-height: 1.5;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 6px;
+      margin-right: 4px;
+    }
+    .badge-red    { background: #fee2e2; color: #b91c1c; }
+    .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+    .badge-green  { background: #dcfce7; color: #15803d; }
+    .badge-gray   { background: #f3f4f6; color: #4b5563; }
+
+    .type-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f2f2f7;
+    }
+    .type-row:last-child { border-bottom: none; }
+    .type-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      margin-top: 5px; flex-shrink: 0;
+    }
+    .type-body {}
+    .type-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .type-desc { font-size: 13px; color: #636366; line-height: 1.5; }
+
+    .check-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f2f2f7;
+      font-size: 14px;
+    }
+    .check-row:last-child { border-bottom: none; }
+    .check-icon { font-size: 16px; flex-shrink: 0; }
+
+    .divider {
+      height: 1px; background: #e5e5ea;
+      margin: 20px 14px 0;
+    }
+
+    .open-btn {
+      display: block;
+      margin: 20px 14px 0;
+      background: #b91c1c;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .footer {
+      margin: 20px 14px 0;
+      text-align: center;
+      font-size: 12px;
+      color: #aeaeb2;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>出餐品質管理表</h1>
+  <p>使用教學 — 給出餐同仁</p>
+</div>
+
+<!-- 目錄 -->
+<div class="toc">
+  <div class="toc-title">目錄</div>
+  <a href="#s1"><span class="toc-num">1</span>開啟表單<span class="toc-arrow">›</span></a>
+  <a href="#s2"><span class="toc-num">2</span>選擇日期與餐期<span class="toc-arrow">›</span></a>
+  <a href="#s3"><span class="toc-num">3</span>管理人員名單<span class="toc-arrow">›</span></a>
+  <a href="#s4"><span class="toc-num">4</span>填寫品質紀錄<span class="toc-arrow">›</span></a>
+  <a href="#s5"><span class="toc-num">5</span>儲存與送出<span class="toc-arrow">›</span></a>
+  <a href="#s6"><span class="toc-num">6</span>今日數據<span class="toc-arrow">›</span></a>
+  <a href="#s7"><span class="toc-num">7</span>常見問題<span class="toc-arrow">›</span></a>
+</div>
+
+<!-- Step 1 -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div class="section-title">開啟表單</div>
+  </div>
+  <div class="card">
+    <div class="step">
+      <div class="step-icon">🔗</div>
+      <div class="step-body">
+        <div class="step-label">用瀏覽器開啟連結</div>
+        <div class="step-desc">直接在手機瀏覽器（Safari 或 Chrome）輸入或點擊連結開啟，不需要安裝任何 App。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">📌</div>
+      <div class="step-body">
+        <div class="step-label">加入書籤方便以後使用</div>
+        <div class="step-desc">iOS：點右下角 <strong>分享</strong> → <strong>加入主畫面</strong><br>Android：點選單 → <strong>加到主畫面</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 2 -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div class="section-title">選擇日期與餐期</div>
+  </div>
+  <div class="card">
+    <div class="step">
+      <div class="step-icon">📅</div>
+      <div class="step-body">
+        <div class="step-label">選擇日期</div>
+        <div class="step-desc">點擊日期欄，選擇今天日期（預設會自動帶入今天）。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🕐</div>
+      <div class="step-body">
+        <div class="step-label">選擇餐期</div>
+        <div class="step-desc">點選 <strong>午餐</strong> 或 <strong>晚餐</strong>，選好後才開始填寫對應餐期的資料。</div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>注意</strong>午餐和晚餐的紀錄是分開的，確認選對再填。
+    </div>
+  </div>
+</div>
+
+<!-- Step 3 -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div class="section-title">管理人員名單</div>
+  </div>
+  <div class="card">
+    <div class="step">
+      <div class="step-icon">👥</div>
+      <div class="step-body">
+        <div class="step-label">展開人員名單</div>
+        <div class="step-desc">點擊「人員名單」區塊可以展開或收起，顯示所有出餐同仁。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">➕</div>
+      <div class="step-body">
+        <div class="step-label">新增人員</div>
+        <div class="step-desc">在輸入框輸入姓名，按 <strong>新增</strong> 按鈕。新增後所有裝置都可以看到。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🗑️</div>
+      <div class="step-body">
+        <div class="step-label">移除人員</div>
+        <div class="step-desc">點擊人員名字旁邊的 <strong>×</strong> 即可移除。</div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>注意</strong>人員名單是所有人共用的，新增或移除會影響全部裝置。
+    </div>
+  </div>
+</div>
+
+<!-- Step 4 -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <div class="section-title">填寫品質紀錄</div>
+  </div>
+
+  <!-- 紀錄類型說明 -->
+  <div class="card">
+    <div style="font-size:12px;font-weight:700;color:#8e8e93;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px;">紀錄類型</div>
+    <div class="type-row">
+      <div class="type-dot" style="background:#1d4ed8;"></div>
+      <div class="type-body">
+        <div class="type-name"><span class="badge badge-blue">主管抽查</span></div>
+        <div class="type-desc">組長或店長主動抽查的品項。填寫後若全部正常，會顯示「完美」。</div>
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="type-dot" style="background:#15803d;"></div>
+      <div class="type-body">
+        <div class="type-name"><span class="badge badge-green">攔截紀錄</span></div>
+        <div class="type-desc">出餐前發現問題，已在內部攔截處理，未流出到客人手上。</div>
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="type-dot" style="background:#b91c1c;"></div>
+      <div class="type-body">
+        <div class="type-name"><span class="badge badge-red">客訴紀錄</span></div>
+        <div class="type-desc">客人已收到有問題的餐點，需要記錄的客訴案件。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 填寫步驟 -->
+  <div class="card">
+    <div style="font-size:12px;font-weight:700;color:#8e8e93;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px;">填寫步驟</div>
+    <div class="step">
+      <div class="step-icon">📝</div>
+      <div class="step-body">
+        <div class="step-label">點擊「新增紀錄」</div>
+        <div class="step-desc">在頁面下方找到「＋ 新增紀錄」按鈕，點擊後展開填寫區。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">👤</div>
+      <div class="step-body">
+        <div class="step-label">選擇負責人與品項</div>
+        <div class="step-desc">從下拉選單選擇負責的同仁，再輸入品項名稱（例如：控肉飯、雞腿飯）。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">☑️</div>
+      <div class="step-body">
+        <div class="step-label">勾選問題項目</div>
+        <div class="step-desc">有異常的項目才需勾選，正常不用勾：</div>
+      </div>
+    </div>
+    <!-- 勾選項目說明 -->
+    <div style="background:#f9f9f9;border-radius:10px;padding:10px 12px;margin:4px 0 8px;">
+      <div class="check-row"><span class="check-icon">🧂</span> <strong>鹹度</strong>：太鹹或太淡</div>
+      <div class="check-row"><span class="check-icon">🔥</span> <strong>熟度</strong>：太生或過熟</div>
+      <div class="check-row"><span class="check-icon">✨</span> <strong>美觀度</strong>：擺盤不整齊或外觀有問題</div>
+      <div class="check-row"><span class="check-icon">🖤</span> <strong>燒焦</strong>：有燒焦情況</div>
+      <div class="check-row"><span class="check-icon">⚠️</span> <strong>異物</strong>：有異物需勾選並填寫說明</div>
+    </div>
+    <div class="step">
+      <div class="step-icon">📋</div>
+      <div class="step-body">
+        <div class="step-label">選擇紀錄類型</div>
+        <div class="step-desc">選擇「主管抽查」、「攔截紀錄」或「客訴紀錄」，再填入負責的店長/組長姓名。</div>
+      </div>
+    </div>
+    <div class="note">
+      全部正常 + 主管抽查 = 顯示「完美」，代表品質合格。
+    </div>
+  </div>
+</div>
+
+<!-- Step 5 -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <div class="section-title">儲存與送出</div>
+  </div>
+  <div class="card">
+    <div class="step">
+      <div class="step-icon">💾</div>
+      <div class="step-body">
+        <div class="step-label">點擊「儲存」</div>
+        <div class="step-desc">填好所有紀錄後，點擊底部的 <strong>儲存</strong> 按鈕，資料會上傳到雲端，讓所有裝置都能看到。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">✅</div>
+      <div class="step-body">
+        <div class="step-label">確認儲存成功</div>
+        <div class="step-desc">頁面出現「已儲存 X 筆」的黑色提示條，表示資料已成功送出。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🗑️</div>
+      <div class="step-body">
+        <div class="step-label">清空紀錄</div>
+        <div class="step-desc">若要重填，點右上角的 <strong>清空</strong>（× 圖示），會清除該日期+餐期的所有紀錄。</div>
+      </div>
+    </div>
+    <div class="tip">
+      <strong>注意</strong>儲存前離開頁面，資料只會暫存在本機，換其他裝置看會沒有資料。請記得先儲存。
+    </div>
+  </div>
+</div>
+
+<!-- Step 6 -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <div class="section-title">今日數據</div>
+  </div>
+  <div class="card">
+    <div class="step">
+      <div class="step-icon">📊</div>
+      <div class="step-body">
+        <div class="step-label">今日數據卡片</div>
+        <div class="step-desc">人員名單下方有「今日數據」區塊，顯示當天的：<br><strong>主管抽查</strong> 次數、<strong>攔截</strong> 次數、<strong>客訴</strong> 次數。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🔵</div>
+      <div class="step-body">
+        <div class="step-label">餐期填寫狀態</div>
+        <div class="step-desc">「午」「晚」兩個圓點，有填寫的會變成紅色，沒填的是灰色，方便確認哪個餐期還沒填。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">📈</div>
+      <div class="step-body">
+        <div class="step-label">月度報告</div>
+        <div class="step-desc">點右上角「月報 →」可以查看整月的統計資料，包含每位同仁的品質分數。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 7 -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num">7</div>
+    <div class="section-title">常見問題</div>
+  </div>
+  <div class="card">
+    <div class="step">
+      <div class="step-icon">❓</div>
+      <div class="step-body">
+        <div class="step-label">換裝置看不到資料？</div>
+        <div class="step-desc">確認原本的裝置有點「儲存」。未儲存的資料只在本機，儲存後才同步雲端。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">❓</div>
+      <div class="step-body">
+        <div class="step-label">填到一半資料不見？</div>
+        <div class="step-desc">切換日期或餐期時，未儲存的資料會暫存於本機。回來重新選同樣的日期+餐期就能看到。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">❓</div>
+      <div class="step-body">
+        <div class="step-label">資料需要修改怎麼辦？</div>
+        <div class="step-desc">重新填寫並再次點「儲存」，系統會自動覆蓋舊資料，以最新一次儲存為準。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-icon">❓</div>
+      <div class="step-body">
+        <div class="step-label">需要網路嗎？</div>
+        <div class="step-desc">填寫可以離線，但「儲存」送出需要網路。建議在有網路時再送出。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<a class="open-btn" href="quality_form.html">開啟出餐品質管理表 →</a>
+
+<div class="footer">山也餐盒 SUN.YEI · 出餐品質管理系統</div>
+
+</body>
+</html>
