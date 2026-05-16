@@ -446,10 +446,6 @@
         <button class="seg-btn" data-period="晚餐" onclick="setPeriod(this)">晚餐</button>
       </div>
     </div>
-    <div class="meta-group" style="flex:1;min-width:80px">
-      <span class="meta-label">店長 / 組長</span>
-      <input type="text" class="meta-input" id="manager" placeholder="姓名" />
-    </div>
   </div>
 </div>
 
@@ -812,7 +808,7 @@
   }
 
   function updateAllDropdowns() {
-    document.querySelectorAll('select[data-f="person"], select[data-f="interceptor"]').forEach(sel => {
+    document.querySelectorAll('select[data-f="person"], select[data-f="interceptor"], select[data-f="supervisor"]').forEach(sel => {
       const cur = sel.value;
       sel.innerHTML = buildOptions(cur);
     });
@@ -886,6 +882,12 @@
         ` : ''}
 
         ${type === '主管抽查' ? `
+        <div class="field-row">
+          <div class="field" style="max-width:140px">
+            <label>抽查主管</label>
+            <select data-f="supervisor">${buildOptions('')}</select>
+          </div>
+        </div>
           <button class="perfect-btn" id="perfect-${n}" onclick="togglePerfect(${n})">完美</button>
         ` : ''}
 
@@ -922,6 +924,8 @@
       if (itemEl) itemEl.value = prefill.item || '';
       const intEl = card.querySelector('[data-f="interceptor"]');
       if (intEl) intEl.value = prefill.interceptor || '';
+      const supEl = card.querySelector('[data-f="supervisor"]');
+      if (supEl) supEl.value = prefill.supervisor || '';
 
       ['鹹度','熟度','美觀度','燒焦','異物'].forEach(f => {
         if (prefill[f]) {
@@ -1078,8 +1082,7 @@
       .then(r => r.json())
       .then(data => {
         if (data.records && data.records.length > 0) {
-          const payload = { records: data.records, manager: data.manager, date, period,
-            savedAt: '雲端資料' };
+          const payload = { records: data.records, date, period, savedAt: '雲端資料' };
           saveToLocal(payload);
           emptyForm();
           loadSavedData(payload);
@@ -1107,7 +1110,6 @@
   }
 
   function loadSavedData(data) {
-    document.getElementById('manager').value = data.manager || '';
     data.records.forEach(r => buildCard(r.type, r));
     updateStaffStats();
   }
@@ -1141,14 +1143,12 @@
   function switchContext() {
     emptyForm();
     setSavedBar(null);
-    document.getElementById('manager').value = '';
     checkHistory();
   }
 
   // ── 送出 ─────────────────────────────────────────
   function collectData() {
     const date = document.getElementById('date').value;
-    const manager = document.getElementById('manager').value.trim();
     const records = [];
 
     document.querySelectorAll('.card').forEach((card, i) => {
@@ -1171,18 +1171,18 @@
         異物說明:get('異物說明') ? get('異物說明').value.trim(): '',
         type,
         interceptor: get('interceptor') ? get('interceptor').value : '',
+        supervisor:  get('supervisor')  ? get('supervisor').value  : '',
         abnormals: perfect ? '完美' : abnormals.join('、'),
       });
     });
 
-    return { date, period, manager, records, store: STORE };
+    return { date, period, records, store: STORE };
   }
 
   function submitForm() {
     const payload = collectData();
-    const { date, period, manager, records } = payload;
+    const { date, period, records } = payload;
     if (!date)           { alert('請填寫日期'); return; }
-    if (!manager)        { alert('請填寫店長 / 組長姓名'); return; }
     if (!records.length) { alert('請至少新增一筆紀錄'); return; }
 
     for (const r of records) {

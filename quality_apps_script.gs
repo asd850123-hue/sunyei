@@ -92,7 +92,6 @@ function handleGetRecords(date, period, store) {
       type: String(r[11]), interceptor: String(r[15] || ''),
       perfect: !r[5] && !r[6] && !r[7] && !r[8] && !r[9] && String(r[11])==='主管抽查'
     }));
-    result.manager = String(latest[0][12]);
   }
 
   CacheService.getScriptCache().put(`rec_${store}_${date}_${period}`, JSON.stringify(result), 60);
@@ -124,7 +123,7 @@ function handleGetMonthRecords(year, month, store) {
     num: r[2], person: String(r[3]), item: String(r[4]),
     鹹度: r[5]==='✓', 熟度: r[6]==='✓', 美觀度: r[7]==='✓',
     燒焦: r[8]==='✓', 異物: r[9]==='✓', 異物說明: String(r[10]),
-    type: String(r[11]), manager: String(r[12]), interceptor: String(r[15] || ''),
+    type: String(r[11]), supervisor: String(r[12] || ''), interceptor: String(r[15] || ''),
     perfect: !r[5] && !r[6] && !r[7] && !r[8] && !r[9] && String(r[11])==='主管抽查'
   })) };
 
@@ -214,7 +213,7 @@ function handleSubmit(data) {
       r.美觀度 ? '✓' : '',
       r.燒焦   ? '✓' : '',
       r.異物   ? '✓' : '',
-      r.異物說明, r.type, data.manager, submitTime, store, r.interceptor || '',
+      r.異物說明, r.type, r.supervisor || '', submitTime, store, r.interceptor || '',
     ]);
   });
 
@@ -230,7 +229,7 @@ function getSheet(name) {
     if (name === TAB_RECORD) {
       const headers = ['日期','餐期','編號','製餐人員','品項名稱',
                        '鹹度','熟度','美觀度','燒焦','異物','異物說明',
-                       '紀錄類別','店長/組長','提交時間','門市','攔截人員'];
+                       '紀錄類別','抽查主管','提交時間','門市','攔截人員'];
       sheet.appendRow(headers);
       styleHeader(sheet, headers.length, '#b91c1c');
       sheet.setColumnWidth(1, 110); sheet.setColumnWidth(5, 150);
