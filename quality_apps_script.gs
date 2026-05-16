@@ -79,7 +79,7 @@ function handleGetRecords(date, period, store) {
     String(r[14] || '') === store
   );
 
-  const result = { records: [], manager: '' };
+  const result = { records: [] };
   if (matching.length) {
     const latestTime = matching.reduce((max, r) => {
       const t = String(r[13]); return t > max ? t : max;
@@ -89,7 +89,7 @@ function handleGetRecords(date, period, store) {
       num: r[2], person: String(r[3]), item: String(r[4]),
       鹹度: r[5]==='✓', 熟度: r[6]==='✓', 美觀度: r[7]==='✓',
       燒焦: r[8]==='✓', 異物: r[9]==='✓', 異物說明: String(r[10]),
-      type: String(r[11]), interceptor: String(r[15] || ''),
+      type: String(r[11]), supervisor: String(r[12] || ''), interceptor: String(r[15] || ''),
       perfect: !r[5] && !r[6] && !r[7] && !r[8] && !r[9] && String(r[11])==='主管抽查'
     }));
   }
