@@ -658,8 +658,11 @@
   }
 
   function toggleStaff() {
-    document.getElementById('staff-body').classList.toggle('open');
+    const body = document.getElementById('staff-body');
+    const isOpening = !body.classList.contains('open');
+    body.classList.toggle('open');
     document.getElementById('staff-arrow').classList.toggle('open');
+    if (isOpening) loadStaff();
   }
 
   function addStaff() {
