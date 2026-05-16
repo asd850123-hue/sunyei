@@ -155,8 +155,11 @@
 
 <div class="header">
   <div class="header-top">
-    <h1>月度品質報告</h1>
-    <button class="back-btn" onclick="location.href='quality_form.html'">← 填寫表單</button>
+    <div>
+      <div id="store-label" style="font-size:11px;color:rgba(255,255,255,0.55);margin-bottom:2px;"></div>
+      <h1>月度品質報告</h1>
+    </div>
+    <button class="back-btn" onclick="location.href='quality_form.html?store='+encodeURIComponent(STORE)">← 填寫表單</button>
   </div>
   <div class="month-nav">
     <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
@@ -174,7 +177,16 @@
 
 <script>
   const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvuhuNxIZRi2Ccmx_wJ3nkw7x7KzgthPiKW6UvNttNb3Y5S45j2Yaw76Lwv2Vm4u8HgA/exec';
+  const STORE = new URLSearchParams(location.search).get('store') || '';
   let currentYear, currentMonth;
+  if (!STORE) {
+    document.body.innerHTML = `
+      <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f2f2f7;gap:16px;padding:24px;">
+        <div style="font-size:17px;font-weight:700;color:#1c1c1e;margin-bottom:8px;">請選擇門市</div>
+        <a href="?store=六家店" style="width:100%;max-width:300px;display:block;background:#1c1c1e;color:#fff;border-radius:14px;padding:18px;font-size:16px;font-weight:700;text-align:center;text-decoration:none;">六家店</a>
+        <a href="?store=竹科店" style="width:100%;max-width:300px;display:block;background:#1c1c1e;color:#fff;border-radius:14px;padding:18px;font-size:16px;font-weight:700;text-align:center;text-decoration:none;">竹科店</a>
+      </div>`;
+  }
 
   (function init() {
     const t = new Date();
@@ -192,7 +204,7 @@
 
   async function loadMonthData() {
     try {
-      const res = await fetch(`${SCRIPT_URL}?action=getMonthRecords&year=${currentYear}&month=${currentMonth}`);
+      const res = await fetch(`${SCRIPT_URL}?action=getMonthRecords&year=${currentYear}&month=${currentMonth}&store=${encodeURIComponent(STORE)}`);
       const data = await res.json();
       if (data.records) {
         const byPeriod = {};
@@ -207,7 +219,7 @@
     } catch(e) {}
 
     // 備援：讀本機 localStorage
-    const prefix = `qc_${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+    const prefix = `qc_${STORE}_${currentYear}-${String(currentMonth).padStart(2,'0')}`;
     const entries = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -221,8 +233,8 @@
   }
 
   async function render() {
-    document.getElementById('month-label').textContent =
-      `${currentYear} 年 ${currentMonth} 月`;
+    document.getElementById('month-label').textContent = `${currentYear} 年 ${currentMonth} 月`;
+    const sl = document.getElementById('store-label'); if (sl) sl.textContent = STORE ? `【${STORE}】` : '';
     document.getElementById('content').innerHTML =
       `<div style="text-align:center;padding:40px;color:#8e8e93">載入中…</div>`;
 

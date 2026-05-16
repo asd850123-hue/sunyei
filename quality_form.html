@@ -425,8 +425,11 @@
 <!-- ── Header ── -->
 <div class="header">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-    <h1>出餐品質管理表</h1>
-    <button onclick="location.href='monthly_report.html'"
+    <div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-bottom:2px;" id="store-label"></div>
+      <h1>出餐品質管理表</h1>
+    </div>
+    <button onclick="location.href='monthly_report.html?store='+encodeURIComponent(STORE)"
       style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:8px;padding:5px 11px;font-size:12px;cursor:pointer">
       月報 →
     </button>
@@ -584,6 +587,15 @@
   // ↓↓ 部署 Apps Script 後填入網址 ↓↓
   const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvuhuNxIZRi2Ccmx_wJ3nkw7x7KzgthPiKW6UvNttNb3Y5S45j2Yaw76Lwv2Vm4u8HgA/exec';
   const READY = SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL_HERE';
+  const STORE = new URLSearchParams(location.search).get('store') || '';
+  if (!STORE) {
+    document.body.innerHTML = `
+      <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f2f2f7;gap:16px;padding:24px;">
+        <div style="font-size:17px;font-weight:700;color:#1c1c1e;margin-bottom:8px;">請選擇門市</div>
+        <a href="?store=六家店" style="width:100%;max-width:300px;display:block;background:#b91c1c;color:#fff;border-radius:14px;padding:18px;font-size:16px;font-weight:700;text-align:center;text-decoration:none;">六家店</a>
+        <a href="?store=竹科店" style="width:100%;max-width:300px;display:block;background:#b91c1c;color:#fff;border-radius:14px;padding:18px;font-size:16px;font-weight:700;text-align:center;text-decoration:none;">竹科店</a>
+      </div>`;
+  }
 
   let count = 0;
   let period = '午餐';
@@ -594,6 +606,7 @@
     const t = new Date();
     document.getElementById('date').value =
       `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+    document.getElementById('store-label').textContent = STORE ? `【${STORE}】` : '';
     loadStaff();
 
     // 人員下拉選單變更時更新完成率卡片
@@ -627,7 +640,7 @@
   // ── 人員名單（從 Google Sheets 讀取，本機 localStorage 備援） ──
   function loadStaff() {
     // 先從 localStorage 快速載入（避免白畫面）
-    const cached = localStorage.getItem('staffList');
+    const cached = localStorage.getItem(`staffList_${STORE}`);
     if (cached) {
       staffList = JSON.parse(cached);
       renderStaffCards();
@@ -639,11 +652,11 @@
     }
 
     // 從 Sheets 取最新名單
-    fetch(`${SCRIPT_URL}?action=getStaff`)
+    fetch(`${SCRIPT_URL}?action=getStaff&store=${encodeURIComponent(STORE)}`)
       .then(r => r.json())
       .then(data => {
         staffList = data.staff || [];
-        localStorage.setItem('staffList', JSON.stringify(staffList));
+        localStorage.setItem(`staffList_${STORE}`, JSON.stringify(staffList));
         renderStaffCards();
         setSyncStatus(true, '已同步');
       })
@@ -672,7 +685,7 @@
     if (staffList.includes(name)) { alert('此姓名已存在'); return; }
 
     staffList.push(name);
-    localStorage.setItem('staffList', JSON.stringify(staffList));
+    localStorage.setItem(`staffList_${STORE}`, JSON.stringify(staffList));
     renderStaffCards();
     updateAllDropdowns();
     input.value = '';
@@ -682,7 +695,7 @@
     fetch(SCRIPT_URL, {
       method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'addStaff', name }),
+      body: JSON.stringify({ action: 'addStaff', name, store: STORE }),
     }).catch(() => {});
   }
 
@@ -707,7 +720,7 @@
 
   function removeStaff(name) {
     staffList = staffList.filter(n => n !== name);
-    localStorage.setItem('staffList', JSON.stringify(staffList));
+    localStorage.setItem(`staffList_${STORE}`, JSON.stringify(staffList));
     renderStaffCards();
     updateAllDropdowns();
 
@@ -715,7 +728,7 @@
     fetch(SCRIPT_URL, {
       method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'removeStaff', name }),
+      body: JSON.stringify({ action: 'removeStaff', name, store: STORE }),
     }).catch(() => {});
   }
 
@@ -728,7 +741,7 @@
     // 所有已儲存的日期（排除當前正在編輯的，改用表單資料）
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (!key.startsWith('qc_') || key === currentKey) continue;
+      if (!key.startsWith(`qc_${STORE}_`) || key === currentKey) continue;
       try {
         const data = JSON.parse(localStorage.getItem(key));
         if (!data || !data.records) continue;
@@ -962,7 +975,7 @@
   }
 
   // ── 本機儲存 ─────────────────────────────────────
-  function historyKey(d, p) { return `qc_${d}_${p}`; }
+  function historyKey(d, p) { return `qc_${STORE}_${d}_${p}`; }
 
   function saveToLocal(payload) {
     localStorage.setItem(
@@ -1050,7 +1063,7 @@
     if (!READY) return;
 
     // 2. 背景從 Sheet 同步（不阻塞畫面）
-    fetch(`${SCRIPT_URL}?action=getRecords&date=${encodeURIComponent(date)}&period=${encodeURIComponent(period)}`)
+    fetch(`${SCRIPT_URL}?action=getRecords&date=${encodeURIComponent(date)}&period=${encodeURIComponent(period)}&store=${encodeURIComponent(STORE)}`)
       .then(r => r.json())
       .then(data => {
         if (data.records && data.records.length > 0) {
@@ -1109,7 +1122,7 @@
     fetch(SCRIPT_URL, {
       method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'clearRecords', date, period }),
+      body: JSON.stringify({ action: 'clearRecords', date, period, store: STORE }),
     }).catch(() => {});
   }
 
@@ -1150,7 +1163,7 @@
       });
     });
 
-    return { date, period, manager, records };
+    return { date, period, manager, records, store: STORE };
   }
 
   function submitForm() {
