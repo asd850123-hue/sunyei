@@ -812,7 +812,7 @@
   }
 
   function updateAllDropdowns() {
-    document.querySelectorAll('select[data-f="person"]').forEach(sel => {
+    document.querySelectorAll('select[data-f="person"], select[data-f="interceptor"]').forEach(sel => {
       const cur = sel.value;
       sel.innerHTML = buildOptions(cur);
     });
@@ -876,6 +876,15 @@
           </div>
         </div>
 
+        ${type === '同仁攔截' ? `
+        <div class="field-row">
+          <div class="field" style="max-width:140px">
+            <label>攔截人員</label>
+            <select data-f="interceptor">${buildOptions('')}</select>
+          </div>
+        </div>
+        ` : ''}
+
         ${type === '主管抽查' ? `
           <button class="perfect-btn" id="perfect-${n}" onclick="togglePerfect(${n})">完美</button>
         ` : ''}
@@ -911,6 +920,8 @@
       if (sel) sel.value = prefill.person || '';
       const itemEl = card.querySelector('[data-f="item"]');
       if (itemEl) itemEl.value = prefill.item || '';
+      const intEl = card.querySelector('[data-f="interceptor"]');
+      if (intEl) intEl.value = prefill.interceptor || '';
 
       ['鹹度','熟度','美觀度','燒焦','異物'].forEach(f => {
         if (prefill[f]) {
@@ -1159,6 +1170,7 @@
         異物:    !perfect && get('異物')    ? get('異物').checked   : false,
         異物說明:get('異物說明') ? get('異物說明').value.trim(): '',
         type,
+        interceptor: get('interceptor') ? get('interceptor').value : '',
         abnormals: perfect ? '完美' : abnormals.join('、'),
       });
     });
