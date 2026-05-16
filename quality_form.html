@@ -426,7 +426,6 @@
 <div class="header">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
     <div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-bottom:2px;" id="store-label"></div>
       <h1>出餐品質管理表</h1>
     </div>
     <button onclick="location.href='monthly_report.html?store='+encodeURIComponent(STORE)"
@@ -443,6 +442,7 @@
       <span class="meta-label">門市</span>
       <div class="meta-input" style="font-weight:700;letter-spacing:0.5px;" id="store-display"></div>
     </div>
+
     <div class="meta-group">
       <span class="meta-label">餐期</span>
       <div class="segment">
@@ -606,7 +606,6 @@
     const t = new Date();
     document.getElementById('date').value =
       `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
-    document.getElementById('store-label').textContent = STORE ? `【${STORE}】` : '';
     const sd = document.getElementById('store-display'); if (sd) sd.textContent = STORE || '—';
     loadStaff();
 
